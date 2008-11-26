@@ -1,0 +1,176 @@
+.wkBody
+{
+	/* background-color: #ffffff; */
+	font-size: 10pt;
+	line-height: 14pt;
+	margin: 8;
+}
+
+.wkTitle
+{
+	font-weight: bold;
+	font-size: 18px;
+	border-bottom: groove 2px #e0e0e0;	
+}
+
+.wkRedirected
+{
+	font-size: 9pt;
+	color:#c0c0c0;
+}
+
+.wkHeadline
+{
+	font-weight:bold;
+	margin-bottom: 8pt;
+}
+
+.wkHeadline1
+{
+	font-size: 14pt;
+}
+
+.wkHeadline2
+{
+	font-weight: normal;
+	font-size: 12pt;
+}
+
+.wkHeadline3
+{
+	font-size: 11pt;
+}
+
+.wkHeadline4
+{
+	font-size: 11pt;
+}
+
+/* Internal connected link */
+a.wkInternalLink
+{
+	color: #0000a0;
+	text-decoration: none;
+}
+
+a.wkInternalLinkNotExisting
+{
+	color: #a00000;
+	text-decoration: none;
+}
+
+/* External connected link */
+a.wkExternalLink
+{
+	color: #008080;
+	text-decoration: none;
+}
+
+/* Styles for enumerations (ordered and unordered) */
+.wkUnorderedList
+{
+}
+
+/* this is the main class for an item */
+.wkUnorderedListItem
+{
+}
+
+/* this is the class for an item with no indention */
+.wkUnorderedListItem0
+{
+}
+
+.wkUnorderedListItem1
+{
+}
+
+.wkUnorderedListItem2
+{
+}
+
+.wkOrderedList
+{
+}
+
+.wkOrderedListItem
+{
+}
+
+.wkOrderedListItem0
+{
+}
+
+.wkOrderedListItem1
+{
+}
+
+.wkOrderedListItem2
+{
+}
+
+.wkDefinitionList
+{
+}
+
+.wkDefinitionListTitle
+{
+	font-weight: bold;
+}
+
+.wkDefinitionListEntry
+{
+}
+
+.wkImageDiv
+{
+	border: solid 1px e0e0e0;
+	padding: 4px;
+	display: block;
+	background-color: #f0f0f0;
+}
+
+.wkInnerImageDiv
+{
+	text-align: center;
+	display: block;
+	max-width: 180px;
+	padding: 4px;
+}
+
+.wkImage
+{
+	background-color: #f0f0f0;
+	border: solid 1px #e0e0e0;
+}
+
+/* Searching */
+.wkSearchBody
+{	
+	font-family: Arial;
+	background-color: #f0f0f0;
+	font-size: 11pt;
+	line-height: 15pt;
+}
+
+.wkSearchTitle
+{
+	font-size: 12pt;
+	font-weight: bold;
+}
+
+.wkSearchResult
+{
+	padding: 4 px;
+}
+
+.wkSearchResultLink
+{
+	color: #0000a0;
+	text-decoration: none;
+}
+
+.wkUnknownTemplate
+{
+	color: #ff0000;
+}
