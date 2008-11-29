@@ -41,7 +41,7 @@
 	UISearchBar	*_searchbar;
 	//Status of Loading Icon
 	BOOL	_isLoadingViewShown;
-	UIView	*_loadingview;
+	UIImageView	*_loadingview;
 }
 @property(nonatomic,retain) NSString *currentLang;
 

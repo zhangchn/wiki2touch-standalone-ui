@@ -171,7 +171,17 @@ typedef enum {
 	[_webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://127.0.0.1:8082/"]]];
 	//Init Loading icon
 	_isLoadingViewShown=NO;
-	_loadingview=[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"loading.png"]];
+	//_loadingview=[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"loading.png"]];
+	//_loadingview=[[UIImageView alloc] init];
+	_loadingview = [[UIImageView alloc] initWithFrame:CGRectMake(0,0,320,370)];
+	_loadingview.animationImages=[NSArray arrayWithObjects:
+					[UIImage imageNamed:@"loading1.png"],
+					[UIImage imageNamed:@"loading2.png"],
+					[UIImage imageNamed:@"loading3.png"],
+					nil
+					];
+	[_loadingview setAnimationDuration:1.2];
+	[_loadingview setAnimationRepeatCount:0];
 }
 
 -(void) testThread:(id)parm
@@ -230,6 +240,7 @@ typedef enum {
 	
 	if(_isLoadingViewShown==NO){
 		[window addSubview:_loadingview];
+		[_loadingview startAnimating];
 		_isLoadingViewShown=YES;
 	}
 	return (YES);
@@ -246,6 +257,7 @@ typedef enum {
 	[_histlistview reloadData];
 	_isLoadingViewShown=NO;
 	[_loadingview removeFromSuperview];
+	[_loadingview stopAnimating];
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -295,6 +307,7 @@ typedef enum {
 	NSLog(@"switchToContentWithURL:%@",[url absoluteString]);
 	//Show loading view
 	[window addSubview:_loadingview];
+	[_loadingview startAnimating];
 	_isLoadingViewShown=YES;
 	[_webview loadRequest:[NSURLRequest requestWithURL:url]];
 	_currentview=MyContentView;
