@@ -557,6 +557,45 @@ std::string CPPStringUtils::tc2sc_utf8(string src)
 	return dst;
 }
 
+std::wstring CPPStringUtils::js_format(std::wstring src)
+{
+	if ( src.empty() )
+		return src;
+	
+	wstring dst = wstring();
+	int i = 0;
+	int length = src.length();
+	while ( i<length )
+	{
+		unsigned int c = src[i];
+		if (c=='\\')
+		{
+			dst += L"\\\\";
+			/*
+			unsigned char d = (c & 0xf0) >> 4;
+			if ( d<10 )
+				dst += '0' + d;
+			else
+				dst += 'A' - 10 + d;
+			
+			d = (c & 0x0f);
+			if ( d<10 )
+				dst += '0' + d;
+			else
+				dst += 'A' - 10 + d;
+			*/
+		}
+		else if(c=='\n')
+		{
+			dst += L"<br />";
+		}
+		else
+			dst += c;
+		i++;
+	}
+	
+	return dst;
+}
 
 
 DBH::DBH(const wchar_t* arg)

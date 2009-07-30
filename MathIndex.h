@@ -20,18 +20,17 @@
  *  along with Wiki2Touch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef IMAGEINDEX_H
-#define IMAGEINDEX_H
+#ifndef MATHINDEX_H
+#define MATHINDEX_H
 
 #include <string>
-#include <stdio.h>
 using namespace std;
 
-class ImageIndex
+class MathIndex
 {
 public:
-	ImageIndex(string pathToDataFile);
-	~ImageIndex();
+	MathIndex(string pathToDataFile);
+	~MathIndex();
 	
 	int NumberOfImages();
 	unsigned char* GetImage(string filename, int* size);

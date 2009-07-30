@@ -20,12 +20,11 @@
  *  along with Wiki2Touch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ImageIndex.h"
+#include "MathIndex.h"
 #include "CPPStringUtils.h"
-#include <cstdio>
 
-const char* IMAGES_DATA_NAME = "images";
-const char* IMAGES_DATA_EXTENSION = ".bin";
+const char* MATH_DATA_NAME = "math";
+const char* MATH_DATA_EXTENSION = ".bin";
 
 #define SIZEOF_POSITION_INFORMATION 16
 
@@ -41,13 +40,13 @@ typedef struct
 } IMAGEFILEHEADER;
 #pragma pack (pop)
 
-ImageIndex::ImageIndex(string pathToDataFile)
+MathIndex::MathIndex(string pathToDataFile)
 {
 	_dataFileName = pathToDataFile;
 	if ( _dataFileName.length()>0 && _dataFileName[_dataFileName.length()-1]!='/' )
 		_dataFileName += '/';
-	_dataFileName += IMAGES_DATA_NAME;
-	_dataFileName += IMAGES_DATA_EXTENSION;
+	_dataFileName += MATH_DATA_NAME;
+	_dataFileName += MATH_DATA_EXTENSION;
 	
 	_numberOfImages = -1;
 		
@@ -62,12 +61,12 @@ ImageIndex::ImageIndex(string pathToDataFile)
 		if ( length && pathToDataFile[length-1]=='/' )
 		{
 			if ( (length>=4) && pathToDataFile[length-4]=='/' )
-				_dataFileName = pathToDataFile + IMAGES_DATA_NAME + "_" + pathToDataFile.substr(length-3, 2) + IMAGES_DATA_EXTENSION;
+				_dataFileName = pathToDataFile + MATH_DATA_NAME + "_" + pathToDataFile.substr(length-3, 2) + MATH_DATA_EXTENSION;
 		}
 		else
 		{
 			if ( (length>=3) && pathToDataFile[length-3]=='/' )
-				_dataFileName = pathToDataFile + "/" + IMAGES_DATA_NAME + "_" + pathToDataFile.substr(length-2, 2) + IMAGES_DATA_EXTENSION;
+				_dataFileName = pathToDataFile + "/" + MATH_DATA_NAME + "_" + pathToDataFile.substr(length-2, 2) + MATH_DATA_EXTENSION;
 		}
 		
 		if ( _dataFileName!="" )
@@ -95,11 +94,11 @@ ImageIndex::ImageIndex(string pathToDataFile)
 		_dataFileName = "";
 }
 
-ImageIndex::~ImageIndex()
+MathIndex::~MathIndex()
 {
 }
 
-unsigned char* ImageIndex::GetImage(string filename, int* size)
+unsigned char* MathIndex::GetImage(string filename, int* size)
 {
 	_lastImagePos = -1;
 	_lastImageLength = 0;
@@ -118,8 +117,9 @@ unsigned char* ImageIndex::GetImage(string filename, int* size)
 	string lowercaseFilename = CPPStringUtils::to_lower_utf8(filename);
 	
 	// .svg is stored as .png
-	if ( lowercaseFilename.find(".svg")==lowercaseFilename.length()-4 )
-		lowercaseFilename += ".png";
+	// Not needed by math, at present
+	//if ( lowercaseFilename.find(".svg")==lowercaseFilename.length()-4 )
+	//	lowercaseFilename += ".png";
 
 	int foundAt = -1;
 	int lBound = 0;
@@ -164,12 +164,12 @@ unsigned char* ImageIndex::GetImage(string filename, int* size)
 	return data;
 }
 
-int ImageIndex::NumberOfImages()
+int MathIndex::NumberOfImages()
 {
 	return _numberOfImages;
 }
 
-string ImageIndex::GetFilename(FILE* f, int imageNumber)
+string MathIndex::GetFilename(FILE* f, int imageNumber)
 {
 	_lastImagePos = 0;
 	_lastImageLength = 0;					  

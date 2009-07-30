@@ -109,8 +109,7 @@ wstring WikiArticle::ProcessArticle(wstring article, string articleTitle)
 	wstring preArticleHtml;
 	wstring articleTitleW = CPPStringUtils::from_utf8w(_articleName);
 	
-	//string filename = settings.WebContentPath() + "PreArticle.html";
-	string filename = __settings->WebContentPath() + "PreArticle.html";
+	string filename = settings.WebContentPath() + "PreArticle.html";
 	void* contents = LoadFile(filename.c_str());
 	if ( contents )
 	{
@@ -157,7 +156,7 @@ wstring WikiArticle::ProcessArticle(wstring article, string articleTitle)
 	// prepare everything what should go after the article html
 	wstring postArticleHtml;
 	
-	filename = __settings->WebContentPath() + "PostArticle.html";
+	filename = settings.WebContentPath() + "PostArticle.html";
 	contents = LoadFile(filename.c_str());
 	if ( contents )
 	{

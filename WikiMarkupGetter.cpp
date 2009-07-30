@@ -50,7 +50,7 @@ wstring WikiMarkupGetter::GetMarkupForArticle(const wstring articleName)
 
 wstring WikiMarkupGetter::GetMarkupForArticle(const string utf8ArticleName)
 {
-	TitleIndex* titleIndex = __settings->GetTitleIndex(_languageCode);
+	TitleIndex* titleIndex = settings.GetTitleIndex(_languageCode);
 	if ( !titleIndex )
 		return wstring();
 	
@@ -76,7 +76,7 @@ wstring WikiMarkupGetter::GetMarkupForArticle(ArticleSearchResult* articleSearch
 	
 	_lastArticleTitle = string(articleSearchResult->TitleInArchive());
 
-	TitleIndex* titleIndex = __settings->GetTitleIndex(_languageCode);
+	TitleIndex* titleIndex = settings.GetTitleIndex(_languageCode);
 	string filename = titleIndex->DataFileName();	
 	FILE* f = fopen(filename.c_str(), "rb");
 	if ( !f )
@@ -171,7 +171,7 @@ wstring WikiMarkupGetter::GetTemplate(const string utf8TemplateName, string temp
 
 	// if the filename is empty, caching is disabled
 	if ( true )
-		filename = __settings->Path() + _languageCode + "/cache/" + filename;
+		filename = settings.Path() + _languageCode + "/cache/" + filename;
 	else
 		filename = "";
 	
@@ -229,7 +229,7 @@ wstring WikiMarkupGetter::GetTemplate(const string utf8TemplateName, string temp
 			templateName = templateName.substr(1);
 		}
 				 
-		TitleIndex* titleIndex = __settings->GetTitleIndex(_languageCode);
+		TitleIndex* titleIndex = settings.GetTitleIndex(_languageCode);
 		
 		// we're looking for templates; if there are more than one take it; maybe we're redirected
 		ArticleSearchResult* articleSearchResult = titleIndex->FindArticle(templateName, true);

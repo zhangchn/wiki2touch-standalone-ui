@@ -33,11 +33,15 @@
 #include "StringUtils.h"
 #include "ConfigFile.h"
 
+//#ifdef MATH_SUPPORT
+#include <CommonCrypto/CommonDigest.h>
+//#endif
+
 #define OUTPUT_GROWS	8192
 
 #define DEBUG false
 
-const wchar_t* wikiTags[] = {L"unused", L"nowiki", L"pre", L"source", L"imagemap", L"code", L"ref", L"references", 0x0};
+const wchar_t* wikiTags[] = {L"unused", L"nowiki", L"pre", L"source", L"imagemap", L"code", L"ref", L"references", L"math", 0x0};
 const wchar_t* nsNames[]  = {L"unused", L"Talk", L"User", L"User_talk", L"Wikipedia", L"Wikipedia_talk", L"Image", L"Image_talk",
 						     L"MediaWiki", L"MediaWiki_talk", L"Template", L"Template_talk", L"Help", L"Help_talk", L"Category", L"Category_talk", 0x0};
 
@@ -107,8 +111,8 @@ WikiMarkupParser::WikiMarkupParser(const wchar_t* languageCode, const wchar_t* p
 	_pageName = pageName;
 		
 	string lc = CPPStringUtils::to_string(_languageCodeW);
-	_titleIndex = __settings->GetTitleIndex(lc);
-	_languageConfig = __settings->LanguageConfig(lc);	
+	_titleIndex = settings.GetTitleIndex(lc);
+	_languageConfig = settings.LanguageConfig(lc);	
 	
 	string imageNamespace = string();
 	if ( _titleIndex )
@@ -120,7 +124,7 @@ WikiMarkupParser::WikiMarkupParser(const wchar_t* languageCode, const wchar_t* p
 												
 	_imageNamespace = wstrdup(CPPStringUtils::to_wstring(imageNamespace).c_str());
 	
-	_imagesInstalled = __settings->AreImagesInstalled(lc);
+	_imagesInstalled = settings.AreImagesInstalled(lc);
 }
 
 WikiMarkupParser::~WikiMarkupParser()
@@ -577,7 +581,7 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 				if ( brakedCount )
 					break;
 				
-				if ( __settings->ExpandTemplates() )
+				if ( settings.ExpandTemplates() )
 				{
 					int templateLength = srcCurrent - srcPos - 2; // the two trailing } are ignored
 					
@@ -867,7 +871,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 			// evaluate the expression (i.e. the article name) here
 			DBH Expression(expression);
 			
-			TitleIndex* titleIndex = __settings->GetTitleIndex(CPPStringUtils::to_string(_languageCodeW));
+			TitleIndex* titleIndex = settings.GetTitleIndex(CPPStringUtils::to_string(_languageCodeW));
 			ArticleSearchResult* articleSearchResult = titleIndex->FindArticle(CPPStringUtils::to_utf8(wstring(expression)));
 			
 			result = !articleSearchResult;
@@ -1941,12 +1945,12 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 
 	/* statistics */ 
 	else if ( !wcscmp(text, L"CURRENTVERSION") ) 
-		return wstrdup(CPPStringUtils::to_wstring(__settings->Version()).c_str());
+		return wstrdup(CPPStringUtils::to_wstring(settings.Version()).c_str());
 	else if ( !wcscmp(text, L"NUMBEROFEDITS") ) 
 		return wstrdup(L"1");
 	else if ( !wcscmp(text, L"NUMBEROFARTICLES") ) 
 	{
-		TitleIndex* titleIndex = __settings->GetTitleIndex(CPPStringUtils::to_string(_languageCodeW));
+		TitleIndex* titleIndex = settings.GetTitleIndex(CPPStringUtils::to_string(_languageCodeW));
 		wchar_t buffer[32];
 		swprintf(buffer, 32, L"%i", titleIndex->NumberOfArticles());
 		return wstrdup(buffer);
@@ -2679,7 +2683,7 @@ void WikiMarkupParser::HandleInternalLink(const wchar_t* linkText)
 			Append(linkDescription);
 			return;
 		}
-		else if ( !__settings->IsLanguageInstalled(CPPStringUtils::to_string(wstring(lowerSpecial))) )
+		else if ( !settings.IsLanguageInstalled(CPPStringUtils::to_string(wstring(lowerSpecial))) )
 		{
 			// Not installed laguages will not be become a link
 			return;
@@ -2989,7 +2993,7 @@ void WikiMarkupParser::Parse()
 					else if ( _definitionList==1 )
 						Append(L"</dt>\r\n");
 				
-					Append(L"</dl\r\n");
+					Append(L"</dl>\r\n");
 					
 					_definitionList = 0;
 				}
@@ -3583,6 +3587,122 @@ void WikiMarkupParser::Parse()
 									InsertReferences();
 								break;
 									
+							case 8: // math
+								if ( !endTag || emptyTag )
+								{
+								//#ifdef MATH_SUPPORT
+									//Hashing Math with MD5
+									/*
+									CC_LONG length;
+									wchar_t* mathwch0; 
+									wchar_t* mathwch;
+									wchar_t* pwchr;
+									wchar_t* raw=(wchar_t*)malloc(1024);
+
+									mathwch=GetTextUntilNextTag();
+									mathwch0=mathwch;
+									raw=wcscpy(raw, mathwch);
+
+
+									//Remove leading space
+									while((*mathwch == L' ')||(*mathwch == L'\n')) mathwch ++;
+									//Remove space from the end, if any.
+									pwchr = mathwch + wcslen(mathwch) -1;
+									while((*pwchr == L' ')||(*pwchr==L'\n')) {*pwchr = L'\0'; pwchr --;};
+
+									
+
+									string mathutf8 = CPPStringUtils::to_utf8(wstring(mathwch));
+									
+									length = mathutf8.size();
+									unsigned char *md5 =(unsigned char*) malloc(18*(sizeof(unsigned char)));
+									CC_MD5((void*)(mathutf8.data()),length,md5);
+									//md5[16]=0x0;
+									//Append(mathwch);
+									wchar_t *md5wstr=(wchar_t *)malloc(64*sizeof(wchar_t));
+									wchar_t *md5imgtags=(wchar_t *)malloc((128)*sizeof(wchar_t));
+									swprintf(md5wstr,(size_t)64,L"%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x",
+										md5[0],md5[1],md5[2],md5[3],
+										md5[4],md5[5],md5[6],md5[7],
+										md5[8],md5[9],md5[10],md5[11],
+										md5[12],md5[13],md5[14],md5[15]);
+									swprintf(md5imgtags,(size_t)128,L"<img src=\"./math:%S.png\" />",md5wstr);
+									//Append((CPPStringUtils::to_wstring(std::string(md5str))).data());
+									Append(L"<!-- raw:");
+									Append(raw);
+									//Append(L":alt:");
+									//Append(mathwch);
+									Append(L":-->");
+									Append(md5imgtags);
+									//Append(L" alt=\"");
+									//Append(mathwch);
+									//Append(L"\" />");
+									
+									free(md5);
+									free(md5wstr);
+									free(md5imgtags);
+									free(raw);
+									free(mathwch0);
+									*/
+									CC_LONG length;
+									wchar_t* mathwch; 
+									wchar_t* pwchr;
+									wchar_t* raw=(wchar_t*)malloc(2048);
+									wchar_t* alt=(wchar_t*)malloc(2048);
+
+									mathwch = GetTextUntilNextTag();
+									wcsncpy(raw, mathwch,2047);
+									wcsncpy(alt, mathwch,2047);
+
+									pwchr = mathwch;
+
+									//Remove leading space
+									//while((*mathwch == L' ')||(*mathwch == L'\n' )) mathwch ++;
+									while((*alt == L' ')||(*alt == L'\n' )) alt ++;
+									//Remove space from the end, if any.
+									pwchr = alt + wcslen(alt) -1;
+									while((*pwchr == L' ')||(*pwchr == L'\n')) {*pwchr = L'\0'; pwchr --;};
+
+									
+									string mathutf8 = CPPStringUtils::to_utf8(wstring(alt));
+									//mathutf8 = "&lt;math&gt;"+mathutf8+"&lt;\\math&gt;";
+									
+									length = mathutf8.size();
+									unsigned char *md5 =(unsigned char*) malloc(18*(sizeof(unsigned char)));
+									CC_MD5((void*)(mathutf8.data()),length,md5);
+									wstring formatted_math= CPPStringUtils::js_format(wstring(alt));
+									//md5[16]=0x0;
+									//Append(mathwch);
+									wchar_t *md5wstr=(wchar_t *)malloc(64*sizeof(wchar_t));
+									wchar_t *md5imgtags=(wchar_t *)malloc((160+formatted_math.size())*sizeof(wchar_t));
+									//wchar_t *md5imgtags=(wchar_t *)malloc(64*sizeof(wchar_t));
+									swprintf(md5wstr,(size_t)64,L"%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x",
+										md5[0],md5[1],md5[2],md5[3],
+										md5[4],md5[5],md5[6],md5[7],
+										md5[8],md5[9],md5[10],md5[11],
+										md5[12],md5[13],md5[14],md5[15]);
+									//swprintf(md5imgtags,(size_t)64,L"<img src=\"./math:%S.png\" />",md5wstr);
+
+									swprintf(md5imgtags,(size_t)(160+formatted_math.size()),L"<img onerror=\"mathImgAlternative('%S',this);\" src=\"./math:%S.png\"/>\0",formatted_math.c_str(),md5wstr);
+									//Append((CPPStringUtils::to_wstring(std::string(md5str))).data());
+									Append(L"<!-- raw:");
+									Append(raw);
+									Append(L":alt:");
+									Append(alt);
+									Append(L":-->");
+									Append(md5imgtags);
+									//Append(alt);
+									//Append(L"');\" />");
+									free(md5);
+									free(md5wstr);
+									free(md5imgtags);
+									free(raw);
+
+								//#else
+								//	Append(GetTextUntilNextTag());
+								//#endif //MATH_SUPPORT
+								}
+								break;
 							default:
 								break;
 								
@@ -3777,6 +3897,38 @@ void WikiMarkupParser::Parse()
 						Append(L":");
 					break;
 				}
+#if 0
+//#ifdef MATH_SUPPORT
+				case '&':
+				{
+					int count=0;
+					if (Peek()!='l')
+					{
+						Append(L"l");
+						break;
+					}
+					else if(wcsncmp(_pCurrentInput,L"lt;math&gt;",11)==0)
+					{
+						count++;
+						int offset=11;
+						for(;offset<4095;offset++)
+						{
+							if(Peek(offset)=='&' && wcsncmp(_pCurrentInput+offset,L"&lg;\\math&gt;",13))
+							{
+								count--;
+
+							}
+						}
+						break;
+
+					}
+					else 
+					{
+						break;
+					}
+					
+				}
+#endif //MATH_SUPPORT
 		
 				default:
 					Append(c);

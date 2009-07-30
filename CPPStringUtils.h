@@ -23,6 +23,7 @@
 using namespace std;
 
 #include <string>
+#include <wctype.h>
 
 class CPPStringUtils {
 public:
@@ -51,6 +52,8 @@ public:
 	
 	static std::string exchange_diacritic_chars_utf8(string src);
 	static std::string tc2sc_utf8(string src);
+	static std::wstring js_format(std::wstring src);
+
 };
 
 

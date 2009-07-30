@@ -30,6 +30,7 @@
 #include "ConfigFile.h"
 #include "TitleIndex.h"
 #include "ImageIndex.h"
+#include "MathIndex.h"
 
 using namespace std;
 
@@ -49,6 +50,8 @@ public:
 	int Port();
 	
 	string Path();
+	string Home();
+	string Cache();
 	string DefaultLanguageCode();
 	string InstalledLanguages();
 	string WebContentPath();
@@ -60,6 +63,7 @@ public:
 	ConfigFile* LanguageConfig(string languageCode);
 	TitleIndex* GetTitleIndex(string languageCode);
 	ImageIndex* GetImageIndex(string languageCode);
+	MathIndex* GetMathIndex(string languageCode);
 	
 private:
 	bool _verbose;
@@ -69,6 +73,8 @@ private:
 	in_addr_t _addr;
 	int _port;
 	string _path;
+	string _home;
+	string _cache;
 	string _defaultLanguageCode;
 	string _installedLanguages;
 	string _basePath;
@@ -77,10 +83,10 @@ private:
 	void* _languageConfigs;
 	void* _titleIndexes;
 	void* _imageIndexes;
+	void* _mathIndexes;
 };
 
 extern Settings settings;
-extern Settings *__settings;
 
 #endif SETTINGS_H
 	

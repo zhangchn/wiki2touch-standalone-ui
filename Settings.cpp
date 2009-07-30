@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 #include "CPPStringUtils.h"
 
-const char* version = "0.60";
+const char* version = "0.65";
 
 Settings settings;
 
@@ -50,7 +50,14 @@ typedef struct tagIMAGEINDEX
 	string	languageCode;
 	ImageIndex* imageIndex;
 	tagIMAGEINDEX* next;
-} IMAGEINDEX;
+}IMAGEINDEX;
+typedef struct tagMATHINDEX
+{
+	string	languageCode;
+	MathIndex* mathIndex;
+	tagMATHINDEX* next;
+} MATHINDEX;
+
 
 Settings::Settings()
 {
@@ -60,7 +67,7 @@ Settings::Settings()
 	
 	_addr = inet_addr("127.0.0.1");
 	_addr = INADDR_ANY;
-	_port = 8082;
+	_port = 8080;
 	_path = "~/Media/Wikipedia";
 	_webContentPath = "";
 	
@@ -152,30 +159,40 @@ bool Settings::Init(int argc, char *argv[])
 		i++;
 	}
 
+/*	const char* pfx = getenv("HOME");
+	if ( pfx ) 
+		_home = pfx;
+	else
+		// unable to resolve the home variable, use the path for the iPod Touch/iPhone
+		_home = "/var/mobile/";
+	if ( !_home.length() || _home[_home.length()-1]!='/' )
+		_home += "/";
+*/	
 	if ( _path.empty() )
 		_path = string("~/Media/Wikipedia");
 
 	if ( _path.find("~")==0 ) 
 	{
-		const char* pfx = getenv("HOME");
-		
-		if ( pfx ) 
-			_path = pfx + _path.substr(1);
+		if ( _path.length()>1 && _path[1]=='/' )
+			//_path = _home + _path.substr(2);
+			_path = "/var/mobile/" + _path.substr(2);
 		else
-			// unable to resolve the home variable, use the path for the iPod Touch/iPhone
-			_path = "/var/root/Media/Wikipedia/";
+			_path = _home + _path.substr(1);
 	}
 	
 	// add the trailing slash if necessary
 	if ( _path[_path.length()-1]!='/' )
 		_path += '/';	
 
+	// create the cache folder in any case
+	_cache = _home + "Library/Caches/Wiki2Touch/";
+	mkdir(_cache.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+	
 	// store the application path
 	_basePath = argv[0];
 	int pos = _basePath.find_last_of('/');
 	if ( pos>=0 )
 		_basePath = _basePath.substr(0, pos+1);
-		_basePath = _basePath + "daemon/";
 	
 	// set the path for the web content folder
 	_webContentPath = _basePath + "webcontent/";		
@@ -216,26 +233,28 @@ bool Settings::Init(int argc, char *argv[])
 						_installedLanguages += string(",") + string(dirbuf->d_name);
 					
 					// create the cache dir (anyway, either it is existing or not)
-					string cache = _path + dirbuf->d_name + "/cache"; 
-					mkdir(cache.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+					// string cache = _path + dirbuf->d_name + "/cache"; 
+					string cache = _cache +  dirbuf->d_name + "/";
+					
+					struct stat dirstatbuf;
+					if ( stat(cache.c_str(), &dirstatbuf) >=0 )
+					{
+						if ( dirstatbuf.st_ctimespec.tv_sec>statbuf.st_ctimespec.tv_sec )
+						{
+							// article.bin is newer, clear the cache
+							// rmdir(cache.c_str());
+							// mkdir(cache.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+						}
+					}
+					else
+						mkdir(cache.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 				}
 			}
 		}
 		
 		closedir(dir);
 	}
-	//Some dirty hack to override dirent part
-#if 0
-	_path="/var/mobile/Media/Wikipedia/";
-	if(!_defaultLanguageCode.empty())
-	{
-		_installedLanguages =  _defaultLanguageCode;
-		//if(_defaultLanguageCode.length()>(string::size_type)2)
-			firstFoundLanguageCode = _defaultLanguageCode.substr(0,2);
-		//else
-		//	firstFoundLanguageCode = _defaultLanguageCode;
-	}
-#endif
+	
 	// check for our "default" database (contains help and so on)
 	path = _basePath + "xx/articles.bin";
 	if ( stat(path.c_str(), &statbuf) >=0 && S_ISREG(statbuf.st_mode) )
@@ -246,7 +265,7 @@ bool Settings::Init(int argc, char *argv[])
 			firstFoundLanguageCode = "xx";
 		}
 		else
-			_installedLanguages += string(",xx");
+			_installedLanguages += ",xx";
 	}
 	
 	if ( !IsLanguageInstalled(_defaultLanguageCode) )
@@ -278,6 +297,16 @@ in_addr_t Settings::Addr()
 int Settings::Port()
 {
 	return _port;
+}
+
+string Settings::Home()
+{
+	return _home;
+}
+
+string Settings::Cache()
+{
+	return _cache;
 }
 
 string Settings::Path()
@@ -312,6 +341,15 @@ bool Settings::AreImagesInstalled(string languageCode)
 	// no, check local ones
 	return GetImageIndex(languageCode)->NumberOfImages()>0;
 }
+
+/*
+bool Settings::AreMathsInstalled(string languageCode)
+{
+	if (GetMathIndex("xc")->NumberOfImages() >=0)
+		return true;
+	return GetMathIndex(languageCode)->NumberOfImages()>0;
+}
+*/
 
 string Settings::WebContentPath()
 {
@@ -400,6 +438,35 @@ ImageIndex* Settings::GetImageIndex(string languageCode)
 	_imageIndexes = imageIndex;
 	
 	return imageIndex->imageIndex;
+}
+
+MathIndex* Settings::GetMathIndex(string languageCode)
+{
+	CPPStringUtils::to_lower(languageCode);
+	
+	MATHINDEX* mathIndex = (MATHINDEX*) _mathIndexes;
+	while ( mathIndex && mathIndex->languageCode!=languageCode)
+		mathIndex = mathIndex->next;
+	
+	if ( mathIndex )
+		return mathIndex->mathIndex;
+	
+	mathIndex = new MATHINDEX;
+	
+	mathIndex->languageCode = languageCode;
+	
+	if ( languageCode=="xx" ) // our "special" database is located here
+		mathIndex->mathIndex = new MathIndex(_basePath + languageCode);
+	else if ( languageCode=="xc" ) // maths from wiki "commons" is locate in the Wikipedia folder itself 
+		mathIndex->mathIndex = new MathIndex(Path());
+	else
+		mathIndex->mathIndex = new MathIndex(Path() + languageCode);
+	
+	mathIndex->next = (MATHINDEX*) _mathIndexes;
+	
+	_mathIndexes = mathIndex;
+	
+	return mathIndex->mathIndex;
 }
 
 
