@@ -12,11 +12,11 @@
 		var e=document.createElement('span');
 		var re=new RegExp('<br />','g');
 		//text=text.replace(re,"\n");
-		var array1=text.split('<br />');
-		for (var i in array1)
+		var lines=text.split('<br />');
+		for (var i in lines)
 		{
-			e.appendChild(document.createTextNode(array1[i]));
-			if(i<array1.length-1)e.appendChild(document.createElement('br'));
+			e.appendChild(document.createTextNode(lines[i]));
+			if(i<lines.length-1)e.appendChild(document.createElement('br'));
 		}
 		//var t=document.createTextNode(text);
 		//e.appendChild(t);
