@@ -242,7 +242,7 @@
 			{				
 				var xmlHttp = GetXMLHTTPObject();
 				xmlHttp.open("GET", "/ajax/search:" + phrase, false);
-				xmlHttp.send();
+				xmlHttp.send('');
 			
 				if ( xmlHttp.status==200 )
 					suggestions = xmlHttp.responseText;
