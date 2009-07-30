@@ -1,0 +1,34 @@
+<html>
+<head>
+	<meta id="viewport" name="viewport" content="width=320; initial-scale=0.6667; maximum-scale=4.0; minimum-scale=0.6667 "/>
+	<link href="/stylesheets/shared.css" type="text/css" rel="stylesheet">
+	<link href="/stylesheets/main.css" type="text/css" rel="stylesheet">
+	<link href="/stylesheets/mediawiki_common.css" type="text/css" rel="stylesheet">
+	<link href="/stylesheets/mediawiki_monobook.css" type="text/css" rel="stylesheet">
+	<link href="/stylesheets/wikisrv.css" type="text/css" rel="stylesheet">
+	<link href="/images/apple-touch-icon.png" rel="apple-touch-icon" />	
+	<script type="text/javascript">
+	function mathImgAlternative(text,node){
+		var e=document.createElement('span');
+		var re=new RegExp('<br />','g');
+		//text=text.replace(re,"\n");
+		var array1=text.split('<br />');
+		for (var i in array1)
+		{
+			e.appendChild(document.createTextNode(array1[i]));
+			if(i<array1.length-1)e.appendChild(document.createElement('br'));
+		}
+		//var t=document.createTextNode(text);
+		//e.appendChild(t);
+		e.style.cssText="color:red";
+		node.parentNode.insertBefore(e,node);
+		node.parentNode.removeChild(node);
+	}
+	</script>
+	<title>%ArticleTitle%</title>
+</head>
+<body class="wkBody">
+	<div class="wkTitle" onclick="window.location.href='/';"><img src="/images/icon_search.png"/>&nbsp;%ArticleTitle%</div>
+	%RedirectedFrom%
+	<p />
+<!-- article html starts here -->
