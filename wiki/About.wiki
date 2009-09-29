@@ -9,4 +9,4 @@ This project was my attempt to create a standalone App instead of a daemon. And 
 
 As for now, the source code for the original 'wikisrvd' (plus my hack for math support) is in the svn directory _branches/wikisrvd_. 
 
-However, no sources of the tools like indexer/gen/pack etc., is available at my best knowledge. Perhaps these can be reproduced sometime in future.
+The source for _indexer_ can be found in the svn of DSwiki (http://code.google.com/p/dswiki/).
