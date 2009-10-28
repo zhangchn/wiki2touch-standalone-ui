@@ -29,13 +29,13 @@ using namespace std;
 class ArticleSearchResult
 {
 public:
-	ArticleSearchResult(string title, string titleInArchive, fpos_t blockPos, int articlePos, int articleLength);
+	ArticleSearchResult(string title, string titleInArchive, fpos_t blockPos, fpos_t articlePos, int articleLength);
 	
 	string Title();
 	string TitleInArchive();
 	
 	fpos_t BlockPos();
-	int ArticlePos();
+	fpos_t ArticlePos();
 	int ArticleLength();
 	
 	ArticleSearchResult* Next;
@@ -44,7 +44,7 @@ private:
 	string _title;
 	string _titleInArchive;
 	fpos_t _blockPos;
-	int _articlePos;
+	fpos_t _articlePos;
 	int _articleLength;
 };
 
