@@ -483,7 +483,7 @@ string TitleIndex::GetTitle(FILE* f, int articleNumber, int indexNo)
 	if ( !f || articleNumber<0 || articleNumber>=_numberOfArticles  )
 		return string();
 	
-	int indexPos = _indexPos_0;
+	fpos_t indexPos = _indexPos_0;
 	if ( indexNo==1 && _indexPos_1 )
 		indexPos = _indexPos_1;
 	
@@ -491,7 +491,7 @@ string TitleIndex::GetTitle(FILE* f, int articleNumber, int indexNo)
 	if ( error )
 		return string();
 
-	int titlePos;
+	fpos_t titlePos;
 	size_t read = fread(&titlePos, sizeof(int), 1, f);
 
 	if ( !read )
@@ -533,7 +533,7 @@ string TitleIndex::PrepareSearchPhrase(string phrase)
 
 /* search result class */
 
-ArticleSearchResult::ArticleSearchResult(string title, string titleInArchive, fpos_t blockPos, int articlePos, int articleLength)
+ArticleSearchResult::ArticleSearchResult(string title, string titleInArchive, fpos_t blockPos, fpos_t articlePos, int articleLength)
 {
 	Next = NULL;
 	
@@ -561,7 +561,7 @@ fpos_t ArticleSearchResult::BlockPos()
 	return _blockPos;
 }
 
-int ArticleSearchResult::ArticlePos()
+fpos_t ArticleSearchResult::ArticlePos()
 {
 	return _articlePos;
 }
