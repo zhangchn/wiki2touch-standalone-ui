@@ -12,7 +12,7 @@
 
 A dump of artilces contains all textual information and description of images.
 
-The key issue here is to find the correct file to download. Sites like Wikipedia provides dumps in various forms for different purposes, some of which contains far more data than what you need. You only need the one *contains current versions of article content"*, i.e. pages-articles.xml.bz2.
+The key issue here is to find the correct file to download. Sites like Wikipedia provides dumps in various forms for different purposes, some of which contains far more data than what you need. You only need the one *"contains current versions of article content"*, i.e. pages-articles.xml.bz2.
 
 To download wikipedia dumps, please refer to instructions in the following link:
 
