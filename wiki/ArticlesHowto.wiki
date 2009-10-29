@@ -22,7 +22,7 @@ Wiki sites based upon Wikia also use MediaWiki systems, and you can access the d
 
 * Index it with an _indexer_
 
-The purpose of an Indexer is to scan the .bz2 file, strip out the content out of the xml data, and generate another file named 'articles.bin' and optionally 'images.txt' which contains the names of images.
+The purpose of an Indexer is to scan the .bz2 file, re-arrange the content out of the xml data, and generate another file named 'articles.bin' and optionally 'images.txt' which contains the names of images.
 
 The command is simple:
 
