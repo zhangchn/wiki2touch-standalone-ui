@@ -37,3 +37,6 @@ Indexer程序的目的是扫描下载的 .bz2 文件，重组xml数据生成索�
 默认的位置是'/var/mobile/Media/Wikipedia/*xx*/'，其中 '*xx*' 表示两个字节的语言代码，例如 'en' 表示英语，'fr'表示法语，'de'表示德语，'zh'表示汉语，'ja'表示日语等。
 
 目前，英文版 Wikipedia 已有 5GB 之大，其他语言也有数百 MB ，通过 Wifi 进行 SCP 拷贝将会十分缓慢耗时。一些软件支持通过 USB/Dock 的文件传输，如 PC 上的 iFunBox 或 Mac 上的 DiskAid 等。
+
+如有疑问，可现行上传一个较小的文件进行测试。如下articles.bin，源自遗忘的国度Wiki(http://forgottenrealms.wikia.com/ )
+       http://wiki2touch-standalone-ui.googlecode.com/files/articles.bin
