@@ -39,3 +39,6 @@ Currently, wiki2touch is only available for jailbroken iPhoneOS devices (as well
 The default location is '/var/mobile/Media/Wikipedia/*xx*/', where '*xx*' stands for two-character language code, e.g. 'en' for English, 'fr' for French, 'de' for German, 'zh' for Chinese, 'ja' for Japanese, etc.
 
 The Wikipedia in English are as large as 5GBytes, others are about hundreds of MBytes. SCP through Wifi might be slow. Some software can transfer your files through USB/dock, e.g. iFunBox on PC or DiskAid on Mac.
+
+If with doubt, try to upload a smaller one for testing, first. A sample of articles.bin (generated from the Forgotten Realms Wiki, http://forgottenrealms.wikia.com/ ) can be found in the following URL:
+    http://wiki2touch-standalone-ui.googlecode.com/files/articles.bin
