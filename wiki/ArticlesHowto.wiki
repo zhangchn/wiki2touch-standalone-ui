@@ -14,6 +14,10 @@ A dump of artilces contains all textual information and description of images.
 
 The key issue here is to find the correct file to download. Sites like Wikipedia provides dumps in various forms for different purposes, some of which contains far more data than what you need. You only need the one *contains current versions of article content"*, i.e. pages-articles.xml.bz2.
 
+To download wikipedia dumps, please refer to instructions in the following link:
+
+        http://download.wikimedia.org/backup-index.html
+
 Wiki sites based upon Wikia also use MediaWiki systems, and you can access the dump through the Special:Statistics page of that wiki. (Refer to http://www.wikia.com/wiki/Wikia:Database_download)
 
 * Index it with an _indexer_
