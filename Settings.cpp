@@ -64,6 +64,7 @@ Settings::Settings()
 	_debug = false;
 	_verbose = false;
 	_expandTemplates = false;
+	_jsmath = false;
 	
 	_addr = inet_addr("127.0.0.1");
 	_addr = INADDR_ANY;
@@ -155,6 +156,8 @@ bool Settings::Init(int argc, char *argv[])
 			_verbose = false; 
 		else if ( !strcmp(argv[i], "-d") ) 
 			_debug = true;
+		else if ( !strcmp(argv[i], "-jsmath") )
+			_jsmath = true;
 		
 		i++;
 	}
@@ -282,6 +285,11 @@ bool Settings::Verbose()
 bool Settings::Debug()
 {
 	return _debug;
+}
+
+bool Settings::IsJSMathEnabled()
+{
+	return _jsmath;
 }
 
 bool Settings::ExpandTemplates()
