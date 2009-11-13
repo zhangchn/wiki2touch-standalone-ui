@@ -45,6 +45,7 @@ public:
 	bool Verbose();
 	bool Debug();
 	bool ExpandTemplates();
+	bool IsJSMathEnabled();
 	
 	in_addr_t Addr();
 	int Port();
@@ -69,6 +70,7 @@ private:
 	bool _verbose;
 	bool _debug;
 	bool _expandTemplates;
+	bool _jsmath;
 	
 	in_addr_t _addr;
 	int _port;
@@ -84,6 +86,7 @@ private:
 	void* _titleIndexes;
 	void* _imageIndexes;
 	void* _mathIndexes;
+
 };
 
 extern Settings settings;

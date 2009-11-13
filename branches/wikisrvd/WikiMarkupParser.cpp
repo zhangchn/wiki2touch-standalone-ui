@@ -3644,6 +3644,8 @@ void WikiMarkupParser::Parse()
 									free(raw);
 									free(mathwch0);
 									*/
+									if(!settings.IsJSMathEnabled())
+									{
 									CC_LONG length;
 									wchar_t* mathwch; 
 									wchar_t* pwchr;
@@ -3671,8 +3673,6 @@ void WikiMarkupParser::Parse()
 									unsigned char *md5 =(unsigned char*) malloc(18*(sizeof(unsigned char)));
 									CC_MD5((void*)(mathutf8.data()),length,md5);
 									wstring formatted_math= CPPStringUtils::js_format(wstring(alt));
-									//md5[16]=0x0;
-									//Append(mathwch);
 									wchar_t *md5wstr=(wchar_t *)malloc(64*sizeof(wchar_t));
 									wchar_t *md5imgtags=(wchar_t *)malloc((160+formatted_math.size())*sizeof(wchar_t));
 									//wchar_t *md5imgtags=(wchar_t *)malloc(64*sizeof(wchar_t));
@@ -3691,13 +3691,20 @@ void WikiMarkupParser::Parse()
 									Append(alt);
 									Append(L":-->");
 									Append(md5imgtags);
-									//Append(alt);
-									//Append(L"');\" />");
+
 									free(md5);
 									free(md5wstr);
 									free(md5imgtags);
 									free(raw);
-
+									free(alt);
+									} // if(!IsJSMathEnabled)
+									else
+									{
+										wchar_t *mathcontent=GetTextUntilNextTag();
+										Append(L"<span class='math'>");
+										Append(mathcontent);
+										Append(L"</span>");
+									}
 								//#else
 								//	Append(GetTextUntilNextTag());
 								//#endif //MATH_SUPPORT
