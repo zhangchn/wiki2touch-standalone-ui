@@ -491,7 +491,7 @@ string TitleIndex::GetTitle(FILE* f, int articleNumber, int indexNo)
 	if ( error )
 		return string();
 
-	fpos_t titlePos;
+	fpos_t titlePos = 0;
 	size_t read = fread(&titlePos, sizeof(int), 1, f);
 
 	if ( !read )
