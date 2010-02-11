@@ -211,6 +211,16 @@ static BitStream* bsOpenWriteStream ( FILE* stream )
    bs->mode = 'w';
    return bs;
 }
+static BitStream* bsOpenWriteStream2 ( )
+{
+   BitStream *bs = malloc ( sizeof(BitStream) );
+   if (bs == NULL) mallocFail ( sizeof(BitStream) );
+   bs->handle = NULL;
+   bs->buffer = 0;
+   bs->buffLive = 0;
+   bs->mode = 'w';
+   return bs;
+}
 
 
 /*---------------------------------------------*/
@@ -517,7 +527,7 @@ Int32 main ( Int32 argc, Char** argv )
             rbEnd[rbCtr] = bEnd[currBlock];
             rbCtr++;
          }
-         if (currBlock >= 5)
+         if (currBlock >= BZ_MAX_HANDLED_BLOCKS)
             //tooManyBlocks(BZ_MAX_HANDLED_BLOCKS);
 	    break;
 	 if(currBlock>0)
@@ -803,7 +813,9 @@ Int32 main ( Int32 argc, Char** argv )
 						fprintf(fpManifest,"Category talk=");
 					}else if(strncmp(keyName, "key=\"",5)==0)
 					{
-						char *namespaceName=strndup(keyName+5, strlen(keyName)-6);
+						
+						char *namespaceName=malloc(strlen(keyName)-5);
+						memcpy(namespaceName,keyName+5, strlen(keyName)-5);
 						fprintf(fpManifest,"Namespace:%s=",namespaceName);
 						free(namespaceName);
 					}
@@ -834,7 +846,7 @@ Int32 main ( Int32 argc, Char** argv )
 	    pbBuff=blockBuff;
          }
          if (wrBlock >= rbCtr) break;
-	 if (wrBlock >=4)break;
+	 //if (wrBlock >=)break;
          wrBlock++;
       } else
       if (bitsRead == rbStart[wrBlock]) {
@@ -861,17 +873,17 @@ Int32 main ( Int32 argc, Char** argv )
          if ( !endsInBz2(outFileName)) strcat ( outFileName, ".bz2" );
 	*/
 
-	 outFileName="tmp.bz2";
-         fprintf ( stderr, "   writing block %d to `%s' ...\n",
-                           wrBlock+1, outFileName );
+	 //outFileName="tmp.bz2";
+         //fprintf ( stderr, "   writing block %d to `%s' ...\n",
+         //                  wrBlock+1, outFileName );
 
-         outFile = fopen ( outFileName, "wb" );
-         if (outFile == NULL) {
-            fprintf ( stderr, "%s: can't write `%s'\n",
-                      progName, outFileName );
-            exit(1);
-         }
-         bsWr = bsOpenWriteStream ( outFile );
+         //outFile = fopen ( outFileName, "wb" );
+         //if (outFile == NULL) {
+         //   fprintf ( stderr, "%s: can't write `%s'\n",
+         //             progName, outFileName );
+         //   exit(1);
+         //}
+         bsWr = bsOpenWriteStream2 ();
          //bsPutUChar ( bsWr, BZ_HDR_B );    
          pbBuff=bsPutUChar2 ( bsWr, pbBuff, BZ_HDR_B );    
          //bsPutUChar ( bsWr, BZ_HDR_Z );    
