@@ -392,7 +392,7 @@ void appendBlockOffset(off_t start_offset, off_t end_offset, FILE *stream){
    are low you'll need to up this.
 */
 // #define BZ_MAX_HANDLED_BLOCKS 50000
-#define BZ_MAX_HANDLED_BLOCKS 5
+#define BZ_MAX_HANDLED_BLOCKS 50000
 
 /*
 MaybeUInt64 bStart [BZ_MAX_HANDLED_BLOCKS];
