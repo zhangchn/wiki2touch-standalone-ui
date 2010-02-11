@@ -215,7 +215,7 @@ static BitStream* bsOpenWriteStream2 ( )
 {
    BitStream *bs = malloc ( sizeof(BitStream) );
    if (bs == NULL) mallocFail ( sizeof(BitStream) );
-   bs->handle = NULL;
+   //bs->handle = NULL;
    bs->buffer = 0;
    bs->buffLive = 0;
    bs->mode = 'w';
@@ -570,7 +570,11 @@ Int32 main ( Int32 argc, Char** argv )
    char *pTagName=tagName;
    char *pContentBuff=contentBuff;
    Bool tagNameReady=False;
+   // Manifest file: setttings, pahts and namespaces etc.
    FILE *fpManifest=fopen("manifest","w+");
+   char *compressedXMLName=strrchr(argv[1],'/')+1;
+   fprintf(fpManifest, "CompressedXML=%s\n",compressedXMLName);
+
    char *keyName=(char *)malloc(128);
    char *pKeyName=keyName;
    IdxRecord indexRecord;
@@ -605,9 +609,9 @@ Int32 main ( Int32 argc, Char** argv )
 	    pbBuff=bsPutUChar2 ( bsWr, pbBuff, 0x90 );
             pbBuff=bsPutUInt32_2 ( bsWr, pbBuff, blockCRC );
             pbBuff=bsClose2 ( bsWr ,pbBuff);
-	    char *decompBuff=(char *)malloc(1000000);
+	    char *decompBuff=(char *)malloc(1024000);
 	    int sSize=pbBuff-blockBuff;
-	    int dSize=999999;
+	    int dSize=1023999;
 	    int r=BZ2_bzBuffToBuffDecompress(decompBuff,
 						&dSize,
 						blockBuff,
@@ -872,17 +876,21 @@ Int32 main ( Int32 argc, Char** argv )
          strcat (outFileName, inFileName + ofs);
          if ( !endsInBz2(outFileName)) strcat ( outFileName, ".bz2" );
 	*/
+         if(outFile!=NULL)
+         {
+	    fclose(outFile);
+            outFile=NULL;
+         }
+	 outFileName="tmp.bz2";
+         fprintf ( stderr, "   writing block %d to `%s' ...\n",
+                           wrBlock+1, outFileName );
 
-	 //outFileName="tmp.bz2";
-         //fprintf ( stderr, "   writing block %d to `%s' ...\n",
-         //                  wrBlock+1, outFileName );
-
-         //outFile = fopen ( outFileName, "wb" );
-         //if (outFile == NULL) {
-         //   fprintf ( stderr, "%s: can't write `%s'\n",
-         //             progName, outFileName );
-         //   exit(1);
-         //}
+         outFile = fopen ( outFileName, "wb" );
+         if (outFile == NULL) {
+            fprintf ( stderr, "%s: can't write `%s'\n",
+                      progName, outFileName );
+            exit(1);
+         }
          bsWr = bsOpenWriteStream2 ();
          //bsPutUChar ( bsWr, BZ_HDR_B );    
          pbBuff=bsPutUChar2 ( bsWr, pbBuff, BZ_HDR_B );    
