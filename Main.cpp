@@ -109,9 +109,10 @@ void redirect_to(FILE *f, const char* target)
 {
 	char extra[512];
 	sprintf(extra, "Location: %s", target);
-	send_headers(f, 301, "moved permanently", extra, "text/html", -1, -1);
+	//send_headers(f, 301, "moved permanently", extra, "text/html", -1, -1);
+	send_headers(f, 302, "Found", extra, "text/html", -1, -1);
 
-	fprintf(f, "<Please follow <a href=\"%s\">%s</a>\r\n", target, target);
+	fprintf(f, "Please follow <a href=\"%s\">%s</a>\r\n", target, target);
 
 	if ( settings.Verbose() )
 		printf("redirected to %s\r\n", target);
