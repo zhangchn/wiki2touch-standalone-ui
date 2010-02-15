@@ -487,6 +487,7 @@ Int32 main ( Int32 argc, Char** argv )
    buffHi = buffLo = 0;
    currBlock = 0;
    bStart[currBlock] = 0;
+   int numberOfBlock=0;
 
    rbCtr = 0;
    FILE *fpBlockOffset=fopen("blockoffset","w");
@@ -531,12 +532,16 @@ Int32 main ( Int32 argc, Char** argv )
             //tooManyBlocks(BZ_MAX_HANDLED_BLOCKS);
 	    break;
 	 if(currBlock>0)
-		 appendBlockOffset(bStart[currBlock],bEnd[currBlock],fpBlockOffset);
+         {
+            appendBlockOffset(bStart[currBlock],bEnd[currBlock],fpBlockOffset);
+            numberOfBlock++;
+         }
          currBlock++;
 
          bStart[currBlock] = bitsRead;
       }
    }
+
    fclose(fpBlockOffset);
    bsClose ( bsIn );
 
@@ -573,13 +578,17 @@ Int32 main ( Int32 argc, Char** argv )
    // Manifest file: setttings, pahts and namespaces etc.
    FILE *fpManifest=fopen("manifest","w+");
    char *compressedXMLName=strrchr(argv[1],'/')+1;
-   fprintf(fpManifest, "CompressedXML=%s\n",compressedXMLName);
+   if(compressedXMLName!=1)
+	fprintf(fpManifest, "CompressedXML=%s\n",compressedXMLName);
+   else
+	fprintf(fpManifest, "CompressedXML=%s\n",argv[1]);
 
    char *keyName=(char *)malloc(128);
    char *pKeyName=keyName;
    IdxRecord indexRecord;
    int currLen=0;
    FILE *fpIndexRecord=fopen("indexrecord","w");
+   int numberOfArticles=0;
    while (True) {
       b = bsGetBit(bsIn);
       if (b == 2) break;
@@ -694,6 +703,7 @@ Int32 main ( Int32 argc, Char** argv )
 								if(S_DBG)
 								fprintf(stderr, "end of text\n");
 								indexRecord.uncomp_len=currLen;
+								currLen=0;
 								// article length
 							}
 							else if(strcmp(tagName,"/page")==0)
@@ -701,6 +711,7 @@ Int32 main ( Int32 argc, Char** argv )
 								if(S_DBG)
 								fprintf(stderr, "page end\n");
 								writeIndexRecord(indexRecord, fpIndexRecord);
+								numberOfArticles++;
 								// write article record
 							}
 						}
@@ -713,8 +724,16 @@ Int32 main ( Int32 argc, Char** argv )
 									putc( decompBuff[i], stderr);
 								putc('\n',stderr);
 							}
-							indexRecord.uncomp_pos=j+1;
-							indexRecord.block_num=wrBlock;
+							if(j+1==dSize)
+							{
+								indexRecord.uncomp_pos=0;
+								indexRecord.block_num=wrBlock+1;
+							}
+							else
+							{
+								indexRecord.uncomp_pos=j+1;
+								indexRecord.block_num=wrBlock;
+							}
 							if(S_DBG)
 								fprintf(stderr,"block_num:%d\n",wrBlock);
 							//indexRecord.block_start_bit_offset=rbStart[wrBlock];
@@ -726,6 +745,7 @@ Int32 main ( Int32 argc, Char** argv )
 							if(S_DBG)
 							fprintf(stderr, "page start\n");
 						}
+						//tagName[0]='\0';
 						pContentBuff=contentBuff;
 						parserState=0;
 						break;
@@ -818,8 +838,10 @@ Int32 main ( Int32 argc, Char** argv )
 					}else if(strncmp(keyName, "key=\"",5)==0)
 					{
 						
-						char *namespaceName=malloc(strlen(keyName)-5);
-						memcpy(namespaceName,keyName+5, strlen(keyName)-5);
+						int nslen=strlen(keyName)-6;
+						char *namespaceName=malloc(nslen+1);
+						memcpy(namespaceName,keyName+5, nslen);
+						namespaceName[nslen]='\0';
 						fprintf(fpManifest,"Namespace:%s=",namespaceName);
 						free(namespaceName);
 					}
@@ -909,6 +931,8 @@ Int32 main ( Int32 argc, Char** argv )
 	 pbBuff=bsPutUChar2 ( bsWr, pbBuff, 0x59 );
       }
    }
+   fprintf(fpManifest,"NumberOfArticles=%d\n",numberOfArticles);
+   fprintf(fpManifest,"NumberOfBlocks=%d\n",numberOfBlock);
    fclose(fpManifest);
    fclose(fpIndexRecord);
    fprintf ( stderr, "%s: finished\n", progName );
