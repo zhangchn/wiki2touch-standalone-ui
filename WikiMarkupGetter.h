@@ -21,6 +21,7 @@
  */
 
 #include <string>
+#include "TitleIndex.h"
 
 using namespace std;
 
@@ -35,6 +36,7 @@ public:
 	wstring GetMarkupForArticle(const wstring articleName);	
 	wstring GetMarkupForArticle(const string utf8ArticleName);
 	wstring GetMarkupForArticle(ArticleSearchResult* articleSearchResult);
+	wstring GetMarkupForArticle2(ArticleSearchResult* articleSearchResult, TitleIndex *titleIndex);
 
 	string GetLastArticleTitle();
 
@@ -44,5 +46,7 @@ public:
 private:
 	string _languageCode;	
 	string _lastArticleTitle;
+	char *DecompressBlockWithBits(off_t bBegin, off_t bEnd, FILE *f, int *pdSize);
+	int miniFilter(char *pDecomp, int len_max);
 };
 

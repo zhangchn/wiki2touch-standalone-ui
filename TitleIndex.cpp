@@ -22,6 +22,7 @@
 
 #include "TitleIndex.h"
 #include "CPPStringUtils.h"
+#include <stdio.h>
 
 const char* ARTICLES_DATA_NAME = "articles";
 const char* ARTICLES_DATA_EXTENSION = ".bin";
@@ -63,6 +64,7 @@ TitleIndex::TitleIndex(string pathToDataFile)
 
 	_imageNamespace = "";
 	_templateNamespace = "";
+	_useManifest = false;
 		
 	// get the number of articles; this also checks if the files exists
 	FILE* f = fopen(_dataFileName.c_str(), "rb");
@@ -85,9 +87,26 @@ TitleIndex::TitleIndex(string pathToDataFile)
 		
 		if ( _dataFileName!="" )
 			f = fopen(_dataFileName.c_str(), "rb");
+		if (!f)
+		{
+			FILE *fpManifest=fopen((pathToDataFile+"/manifest").c_str() , "r");
+			if(fpManifest)
+			{
+				ConfigFile *c=new ConfigFile(pathToDataFile+"/manifest");
+				string compressedFile=c->GetSetting("CompressedXML");
+				if(f = fopen((pathToDataFile+"/"+compressedFile).c_str(),"r"))
+				{
+					_dataFileName=compressedFile;
+					_pathToDataFile=pathToDataFile;
+					_useManifest=true;
+											
+					_Manifest=c;
+				}
+			}
+		}
 	}
 	
-	if ( f )
+	if ( f && !_useManifest )
 	{
 		int error = 0;
 
@@ -116,6 +135,21 @@ TitleIndex::TitleIndex(string pathToDataFile)
 		
 		fclose(f);
 	}
+	else if( _useManifest && f)
+	{
+		if(EOF==sscanf((_Manifest->GetSetting("NumberOfArticles")).c_str(), "%d", &_numberOfArticles))
+		{
+			_numberOfArticles = -1;
+		}
+		if(EOF==sscanf((_Manifest->GetSetting("NumberOfBlocks")).c_str(), "%d", &_numberOfBlocks))
+		{
+			_numberOfBlocks = -1;
+		}
+		isChinese = (_Manifest->GetSetting("LanguageCode").compare("zh")==0);
+		_imageNamespace = _Manifest->GetSetting("Image","Image");
+		_templateNamespace = _Manifest->GetSetting("Template","Template");
+		fclose(f);
+	}
 }
 
 TitleIndex::~TitleIndex()
@@ -126,6 +160,8 @@ ArticleSearchResult* TitleIndex::FindArticle(string title, bool multiple)
 {
 	if ( _numberOfArticles<=0  )
 		return NULL;
+	if ( _useManifest )
+		return FindArticle2(title, multiple);
 
 	FILE* f = fopen(_dataFileName.c_str(), "rb");
 	if ( !f )
@@ -265,11 +301,19 @@ void TitleIndex::DeleteSearchResult(ArticleSearchResult* articleSearchResult)
 	}
 }
 
+bool TitleIndex::UseManifest()
+{
+	return _useManifest;
+}
+
 string TitleIndex::DataFileName()
 {
 	return _dataFileName;
 }
-
+string TitleIndex::PathToDataFile()
+{
+	return _pathToDataFile;
+}
 int TitleIndex::NumberOfArticles()
 {
 	return _numberOfArticles;
@@ -281,6 +325,9 @@ string TitleIndex::GetSuggestions(string phrase, int maxSuggestions)
 	
 	if ( _numberOfArticles<=0  )
 		return suggestions;
+
+	if ( _useManifest )
+		return GetSuggestions2(phrase, maxSuggestions);
 
 	int indexNo = 1;
 	if ( !_indexPos_1 )
@@ -442,6 +489,8 @@ string TitleIndex::GetRandomArticleTitle()
 {
 	if ( _numberOfArticles<=0 )
 		return string();
+	if ( _useManifest )
+		return GetRandomArticleTitle2();
 	
 	FILE* f = fopen(_dataFileName.c_str(), "rb");
 	if ( !f )
@@ -573,5 +622,438 @@ int ArticleSearchResult::ArticleLength()
 
 
 
+
+#pragma mark useManifest support
+
+ArticleSearchResult* TitleIndex::FindArticle2(string title, bool multiple)
+{
+	if ( _numberOfArticles<=0  )
+		return NULL;
+	FILE *fpIdxRecord, *fpIdxSort, *fpBlkOffset;
+
+	fpIdxRecord=fopen((_pathToDataFile+"/indexrecord").c_str(), "rb");
+	fpIdxSort=fopen((_pathToDataFile+"/indexsort").c_str(), "rb");
+	fpBlkOffset=fopen((_pathToDataFile+"/blockoffset").c_str(), "rb");
+	if(!(fpIdxRecord && fpBlkOffset && fpIdxSort))
+	{
+		if(fpIdxRecord)
+			fclose(fpIdxRecord);
+		if(fpIdxSort)
+			fclose(fpIdxSort);
+		if(fpBlkOffset)
+			fclose(fpBlkOffset);
+		return NULL;
+	}
+	//just check, not used here.
+	if(fpBlkOffset)
+		fclose(fpBlkOffset);
+
+	int indexNo = 0;
+	
+	string lowercaseTitle = CPPStringUtils::to_lower_utf8(title);
+	int foundAt = -1;
+	int lBound = 0;
+	int uBound = _numberOfArticles - 1;
+	int index = 0;	
+
+	while ( lBound<=uBound )
+	{	
+		index = (lBound + uBound) >> 1;
+		
+		// get the title at the specific index
+		string titleAtIndex = GetTitle2(fpIdxRecord, fpIdxSort, index, indexNo);
+		
+		// make it lowercase and skip the prefix
+		titleAtIndex = CPPStringUtils::to_lower_utf8(titleAtIndex);
+		
+		if ( lowercaseTitle<titleAtIndex )
+			uBound = index - 1;
+		else if ( lowercaseTitle>titleAtIndex )
+			lBound = ++index;
+		else
+		{
+			foundAt = index;
+			break;
+		}
+	}
+	
+	if ( foundAt<0 )
+	{
+		fclose(fpIdxRecord);
+		fclose(fpIdxSort);
+		
+		return NULL;
+	}
+	
+	// check if there are more than one articles with the same lowercase name
+	int startIndex = foundAt;
+	while ( startIndex>0 )
+	{
+		string titleAtIndex = GetTitle2(fpIdxRecord, fpIdxSort, startIndex-1, indexNo);
+		titleAtIndex = CPPStringUtils::to_lower_utf8(titleAtIndex);
+	
+		if ( lowercaseTitle!=titleAtIndex )
+			break;
+			
+		startIndex--;
+	}
+
+	int endIndex = foundAt;
+	while ( endIndex<(_numberOfArticles-1) )
+	{
+		string titleAtIndex = GetTitle2(fpIdxRecord, fpIdxSort, endIndex+1, indexNo);
+		titleAtIndex = CPPStringUtils::to_lower_utf8(titleAtIndex);
+		
+		if ( lowercaseTitle!=titleAtIndex )
+			break;
+		
+		endIndex++;
+	}
+	
+	if ( !multiple )
+	{
+		// return a result only if we have a direct hit (case is taken into account)
+		
+		if ( startIndex!=endIndex )
+		{
+			// check if one matches 100%
+			for(int i=startIndex; i<=endIndex; i++)
+			{		
+				string titleInArchive = GetTitle2(fpIdxRecord, fpIdxSort, i, indexNo);
+				if ( title==titleInArchive )
+				{					
+					fclose(fpIdxRecord);
+					fclose(fpIdxSort);
+					
+					return new ArticleSearchResult(title, titleInArchive, _lastBlockPos, _lastArticlePos, _lastArticleLength);
+				}
+			}
+		
+			// nope, multiple matches
+			fclose(fpIdxRecord);
+			fclose(fpIdxSort);
+
+			return NULL;
+		}
+		else
+		{
+			// return the one and only result
+			string titleInArchive = GetTitle2(fpIdxRecord, fpIdxSort, foundAt, indexNo);		
+			fclose(fpIdxRecord);
+			fclose(fpIdxSort);
+
+			return new ArticleSearchResult(title, titleInArchive, _lastBlockPos, _lastArticlePos, _lastArticleLength);
+		}
+	}
+	else
+	{
+		ArticleSearchResult* result = NULL;
+		for(int i=startIndex; i<=endIndex; i++)
+		{
+			string titleInArchive = GetTitle2(fpIdxRecord, fpIdxSort, i, indexNo);
+			
+			if ( title==titleInArchive )
+			{
+				// 100% match
+				DeleteSearchResult(result);
+				
+				fclose(fpIdxRecord);
+				fclose(fpIdxSort);
+
+				return new ArticleSearchResult(title, titleInArchive, _lastBlockPos, _lastArticlePos, _lastArticleLength);
+			}
+
+			// collect the results
+			if ( !result )
+				result = new ArticleSearchResult(title, titleInArchive, _lastBlockPos, _lastArticlePos, _lastArticleLength);
+			else
+				result->Next = new ArticleSearchResult(title, titleInArchive, _lastBlockPos, _lastArticlePos, _lastArticleLength);
+		}
+		
+		fclose(fpIdxRecord);
+		fclose(fpIdxSort);
+		
+		return result;
+	}
+}
+
+string TitleIndex::GetTitle2(FILE* fpIdxRecord, FILE* fpIdxSort, int articleNumber, int indexNo)
+{
+	_lastBlockNumber = 0;
+	_lastBlockPos = 0;
+	_lastArticlePos = 0;
+	_lastArticleLength = 0;					  
+						  
+	if ( articleNumber<0 || articleNumber>=_numberOfArticles  )
+		return string();
+	
+	int error = fseeko(fpIdxSort, articleNumber*sizeof(int), SEEK_SET);
+	if ( error )
+		return string();
+
+	off_t o1=0;
+	size_t titlePos = 0;
+	size_t read = fread(&o1, sizeof(size_t), 1, fpIdxSort);
+	titlePos+=o1;
+
+	if ( !read )
+		return string();
+
+	error = fseeko(fpIdxRecord, titlePos, SEEK_SET);
+	if ( error )
+		return string();
+	
+	// store the article location and size for use in the future
+	unsigned long int uli1=0;
+	unsigned int ui1=0,ui2=0,ui3=0;
+	fread(&uli1, sizeof(unsigned long int), 1, fpIdxRecord);
+	_lastBlockNumber+=uli1;
+	_lastBlockPos=(_lastBlockNumber)*sizeof(off_t)*2;
+	fread(&ui1, sizeof(unsigned int), 1, fpIdxRecord);
+	_lastArticlePos+=ui1;
+	fread(&ui2, sizeof(unsigned int), 1, fpIdxRecord);
+	_lastArticleLength+=ui2;
+	unsigned int name_len;
+	fread(&name_len, sizeof(unsigned int), 1, fpIdxRecord);
+	
+	string result;
+	unsigned char c = 0;
+	int i;
+	for(i=0;i<name_len;i++)
+	{
+		c=fgetc(fpIdxRecord);
+		result += c;
+	}
+	
+	return result;
+}
+
+string TitleIndex::GetSuggestions2(string phrase, int maxSuggestions)
+{
+	string suggestions = string();
+	
+	if ( _numberOfArticles<=0  )
+		return suggestions;
+
+	int indexNo = 1;
+	if ( !_indexPos_1 )
+		indexNo = 0;
+
+	
+	string lowercasePhrase = PrepareSearchPhrase(phrase);
+	
+	int phraseLength = lowercasePhrase.length();
+	if ( phraseLength==0 )
+		return suggestions;
+
+	FILE *fpIdxRecord, *fpIdxSort, *fpBlkOffset;
+
+	fpIdxRecord=fopen((_pathToDataFile+"/indexrecord").c_str(), "rb");
+	fpIdxSort=fopen((_pathToDataFile+"/indexsort").c_str(), "rb");
+	fpBlkOffset=fopen((_pathToDataFile+"/blockoffset").c_str(), "rb");
+	if(!(fpIdxRecord && fpBlkOffset && fpIdxSort))
+	{
+		if(fpIdxRecord)
+			fclose(fpIdxRecord);
+		if(fpIdxSort)
+			fclose(fpIdxSort);
+		if(fpBlkOffset)
+			fclose(fpBlkOffset);
+		return string();
+	}
+	if(fpBlkOffset)
+		fclose(fpBlkOffset);
+
+
+	//FILE* f = fopen(_dataFileName.c_str(), "rb");
+	//if ( !f )
+	//	return suggestions;
+		
+	int foundAt = -1;
+	int lBound = 0;
+	int uBound = _numberOfArticles - 1;
+	int index = 0;	
+	string titleAtIndex;
+	
+	while ( lBound<=uBound )
+	{	
+		index = (lBound + uBound) >> 1;
+		// get the title at the specific index
+		titleAtIndex = GetTitle2(fpIdxRecord, fpIdxSort, index, indexNo);
+		titleAtIndex = PrepareSearchPhrase(titleAtIndex);
+		
+		if ( lowercasePhrase<titleAtIndex )
+			uBound = index - 1;
+		else if ( lowercasePhrase>titleAtIndex )
+			lBound = index + 1;
+		else
+		{
+			foundAt = index;
+			break;
+		}
+	}
+	
+	if ( foundAt<0 )
+	{
+		if ( titleAtIndex.length()>phraseLength )
+			titleAtIndex = titleAtIndex.substr(0, phraseLength);
+		
+		if ( lowercasePhrase>titleAtIndex )
+		{
+			// last one?
+			if ( index==_numberOfArticles-1) 
+			{
+				fclose(fpIdxRecord);
+				fclose(fpIdxSort);
+				return suggestions;
+			}
+			
+			// no
+			index++;
+			titleAtIndex = GetTitle2(fpIdxRecord, fpIdxSort, index, indexNo);
+			
+			titleAtIndex = PrepareSearchPhrase(titleAtIndex);
+						
+			if ( titleAtIndex.length()>phraseLength )
+				titleAtIndex = titleAtIndex.substr(0, phraseLength);
+			
+			if ( lowercasePhrase!=titleAtIndex )
+			{
+				// still not starting with the phrase?
+				fclose(fpIdxRecord);
+				fclose(fpIdxSort);
+				return suggestions;
+			}
+		}
+		else if ( lowercasePhrase<titleAtIndex )
+		{
+			// first one?
+			if ( index==0 ) 
+			{
+				fclose(fpIdxRecord);
+				fclose(fpIdxSort);
+				return suggestions;
+			}
+			
+			// no
+			index--;
+			titleAtIndex = GetTitle2(fpIdxRecord, fpIdxSort, index, indexNo);
+			titleAtIndex = PrepareSearchPhrase(titleAtIndex);
+			
+			if ( titleAtIndex.length()>phraseLength )
+				titleAtIndex = titleAtIndex.substr(0, phraseLength);
+			
+			if ( lowercasePhrase!=titleAtIndex )
+			{
+				// still not starting with the phrase?
+				fclose(fpIdxRecord);
+				fclose(fpIdxSort);
+				return suggestions;
+			}
+		}
+		
+		foundAt = index;
+	}
+	
+	// go to the first article which starts with the phrase
+	int startIndex = foundAt;
+	while ( startIndex>0 )
+	{
+		string titleAtIndex = GetTitle2(fpIdxRecord, fpIdxSort, startIndex-1, indexNo);
+		titleAtIndex = PrepareSearchPhrase(titleAtIndex);
+		
+		if ( titleAtIndex.length()>phraseLength )
+			titleAtIndex = titleAtIndex.substr(0, phraseLength);
+		
+		if ( lowercasePhrase!=titleAtIndex )
+			break;
+		
+		startIndex--;
+	}
+	
+	int results = 0;
+	while ( startIndex<(_numberOfArticles-1) && results<maxSuggestions )
+	{
+		string suggestion = GetTitle2(fpIdxRecord, fpIdxSort, startIndex, indexNo);
+		titleAtIndex = PrepareSearchPhrase(suggestion);
+		
+		if ( titleAtIndex.length()>phraseLength )
+			titleAtIndex = titleAtIndex.substr(0, phraseLength);
+			
+		if ( lowercasePhrase!=titleAtIndex )
+			break;
+
+		if ( !suggestions.empty() )
+			suggestions += "\n";
+		suggestions += suggestion;
+		
+		startIndex++;
+		results++;
+	}
+	
+	if ( (results==maxSuggestions) && (startIndex<(_numberOfArticles+1)) )
+	{
+		// check if the next would also meet
+		startIndex++;
+		
+		string suggestion = GetTitle2(fpIdxRecord, fpIdxSort, startIndex, indexNo);
+		titleAtIndex = PrepareSearchPhrase(suggestion);
+		
+		if ( titleAtIndex.length()>phraseLength )
+			titleAtIndex = titleAtIndex.substr(0, phraseLength);
+
+		// yes, add an empty line at the end of the list
+		if ( lowercasePhrase==titleAtIndex )
+			suggestions += "\n";
+	}
+
+	fclose(fpIdxRecord);
+	fclose(fpIdxSort);
+
+	return suggestions;
+}
+
+string TitleIndex::GetRandomArticleTitle2()
+{
+	if ( _numberOfArticles<=0 )
+		return string();
+	
+	FILE *fpIdxRecord, *fpIdxSort, *fpBlkOffset;
+
+	fpIdxRecord=fopen((_pathToDataFile+"/indexrecord").c_str(), "rb");
+	fpIdxSort=fopen((_pathToDataFile+"/indexsort").c_str(), "rb");
+	fpBlkOffset=fopen((_pathToDataFile+"/blockoffset").c_str(), "rb");
+	if(!(fpIdxRecord && fpBlkOffset && fpIdxSort))
+	{
+		if(fpIdxRecord)
+			fclose(fpIdxRecord);
+		if(fpIdxSort)
+			fclose(fpIdxSort);
+		if(fpBlkOffset)
+			fclose(fpBlkOffset);
+		return string();
+	}
+	if(fpBlkOffset)
+		fclose(fpBlkOffset);
+
+	
+	int j = 20;
+	while ( j-- )
+	{
+		int i = (int) ((double) random() / RAND_MAX * _numberOfArticles);
+		string result = GetTitle2(fpIdxRecord, fpIdxSort, i, 0);
+		
+		if ( result.find(":")==string::npos )
+		{
+			fclose(fpIdxSort);
+			fclose(fpIdxRecord);
+			return result;
+		}
+	}
+	
+	fclose(fpIdxSort);
+	fclose(fpIdxRecord);
+	return string();
+}
 
 

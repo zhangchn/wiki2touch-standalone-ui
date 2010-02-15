@@ -25,6 +25,7 @@
 #include <memory.h>
 #include <wchar.h>
 #include <bzlib.h>
+#include <sys/stat.h>
 
 #include "Settings.h"
 #include "CPPStringUtils.h"
@@ -69,6 +70,10 @@ wstring WikiMarkupGetter::GetMarkupForArticle(ArticleSearchResult* articleSearch
 {
 	if ( !articleSearchResult )
 		return wstring();
+
+	TitleIndex* titleIndex = settings.GetTitleIndex(_languageCode);
+	if(titleIndex->UseManifest())
+		return GetMarkupForArticle2(articleSearchResult, titleIndex);
 	
 	fpos_t blockPos = articleSearchResult->BlockPos(); 
 	int articlePos = articleSearchResult->ArticlePos();
@@ -76,7 +81,6 @@ wstring WikiMarkupGetter::GetMarkupForArticle(ArticleSearchResult* articleSearch
 	
 	_lastArticleTitle = string(articleSearchResult->TitleInArchive());
 
-	TitleIndex* titleIndex = settings.GetTitleIndex(_languageCode);
 	string filename = titleIndex->DataFileName();	
 	FILE* f = fopen(filename.c_str(), "rb");
 	if ( !f )
@@ -132,6 +136,240 @@ wstring WikiMarkupGetter::GetMarkupForArticle(ArticleSearchResult* articleSearch
 	free(text);
 	
 	return content;
+}
+wstring WikiMarkupGetter::GetMarkupForArticle2(ArticleSearchResult* articleSearchResult, TitleIndex *titleIndex)
+{
+	fpos_t blockPos = articleSearchResult->BlockPos(); 
+	int articlePos = articleSearchResult->ArticlePos();
+	int articleLength = articleSearchResult->ArticleLength();
+	
+	_lastArticleTitle = string(articleSearchResult->TitleInArchive());
+
+	string filename = titleIndex->DataFileName();	
+	string path = titleIndex->PathToDataFile();
+	
+	FILE *fpBlkOffset=fopen((path+"/blockoffset").c_str(),"rb");
+	if(!fpBlkOffset)
+		return wstring();
+	FILE *f=fopen((path+"/"+filename).c_str(),"rb");
+	if(!f)
+		return wstring();
+	fseeko(fpBlkOffset, blockPos, SEEK_SET);
+	fpos_t bBegin, bEnd;
+	fread(&bBegin, sizeof(off_t), 1, fpBlkOffset);
+	fseeko(fpBlkOffset, blockPos+sizeof(off_t), SEEK_SET);
+	fread(&bEnd, sizeof(off_t), 1,fpBlkOffset);
+	int dSize;
+	char *decompBuff=DecompressBlockWithBits(bBegin,bEnd,f,&dSize);
+	wstring content;
+	if(decompBuff==NULL)
+	{
+		fprintf(stderr,"primary decomp failed.\n");
+		fclose(fpBlkOffset);
+		fclose(f);
+		return wstring();
+	}
+	else
+	{
+		int len1,len2;
+		char *pDecomp=decompBuff+articlePos;
+		if(articlePos+articleLength>dSize)
+		{
+			len1=miniFilter(pDecomp,dSize-articlePos+1);
+			content = CPPStringUtils::from_utf8w(pDecomp);
+			
+			fseeko(fpBlkOffset, blockPos+sizeof(off_t)*2, SEEK_SET);
+			fread(&bBegin,sizeof(fpos_t),1,fpBlkOffset);
+			fseeko(fpBlkOffset, blockPos+sizeof(off_t)*3, SEEK_SET);
+			fread(&bEnd, sizeof(fpos_t),1,fpBlkOffset);
+			free(decompBuff);
+			decompBuff=DecompressBlockWithBits(bBegin,bEnd,f,&dSize);
+			if(decompBuff==NULL)
+			{
+				fprintf(stderr, "secondary decomp failed.\n");
+				fclose(fpBlkOffset);
+				fclose(f);
+				return content;
+			}
+			//pDecomp=decompBuff;
+			int len2=miniFilter(decompBuff,articleLength-len1);
+				content+=CPPStringUtils::from_utf8w(decompBuff);
+			if(len2<articleLength-len1)
+				fprintf(stderr,"total length < articlelength\n");
+		}
+		else
+		{
+			len1=miniFilter(pDecomp,articleLength);
+			content= CPPStringUtils::from_utf8w(pDecomp);
+		}
+		free(decompBuff);
+	}
+	fclose(fpBlkOffset);
+	fclose(f);
+	content=content.substr(0,content.find(L"</text>"));
+	return content;
+	
+}
+int WikiMarkupGetter::miniFilter(char *pDecomp, int len_max)
+{
+		int len=0;
+		char *pFinal=pDecomp;
+		while(len_max--){
+			char c=*pDecomp++;
+			len++;
+			if(c=='&'){
+				if(pDecomp[0]=='a'
+				&& pDecomp[1]=='m'
+				&& pDecomp[2]=='p'
+				&& pDecomp[3]==';')
+				{
+					pDecomp+=4;
+				}
+				else if(pDecomp[0]=='q'
+				&& pDecomp[1]=='u'
+				&& pDecomp[2]=='o'
+				&& pDecomp[3]=='t'
+				&& pDecomp[4]==';'
+				)
+				{
+					pDecomp+=5;
+					c='\'';
+				}
+				else if(pDecomp[0]=='l' 
+				&& pDecomp[1]=='t'
+				&& pDecomp[2]==';')
+				{
+					pDecomp+=3;
+					c='<';
+				}
+				else if(pDecomp[0]=='g' 
+				&& pDecomp[1]=='t'
+				&& pDecomp[2]==';')
+				{
+					pDecomp+=3;
+					c='>';
+				}
+
+			}
+			*pFinal=c;
+			pFinal++;
+		}
+		*pFinal='\0';
+	return len;
+}
+
+char *WikiMarkupGetter::DecompressBlockWithBits(off_t bBegin, off_t bEnd, FILE *f, int *pdSize)
+{
+	//struct stat64 *buf;
+	//stat64(filename.c_str(), &buf);
+	//off_t size_of_f=buf->st_size *8;
+	fprintf(stderr, "bBegin,bEnd:%llx %llx\n",bBegin,bEnd);
+	FILE *t=fopen ("tmp.bz2","wb");
+	if(!(bBegin<bEnd))
+	{
+		return NULL;
+	}
+	bEnd++;//stupid, but i'd rather follow bzip2recovery
+	int remBegin=bBegin%8;
+	off_t byteBegin=(bBegin-remBegin)/8;
+	int remEnd=bEnd%8;
+	off_t byteEnd=(bEnd-remEnd)/8;
+	fseeko(f,byteBegin, SEEK_SET);
+	int i;
+	fprintf(stderr, "rb, bb,re, be:\n%d, %lld, %d, %lld\n",
+		remBegin, byteBegin, remEnd, byteEnd);
+	char *buff=(char *)malloc (byteEnd-byteBegin+30);
+	buff[0]='B';buff[1]='Z';buff[2]='h';buff[3]='9';
+	buff[4]=0x31;buff[5]=0x41;buff[6]=0x59; 
+	buff[7]=0x26;buff[8]=0x53;buff[9]=0x59;
+	char *pBuff=buff+10;
+	char a,b,c;
+	c=fgetc(f);
+	for(i=0;i<byteEnd-byteBegin;i++)
+	{
+	/*
+		if(i<512){
+			fprintf(stderr,"c:%x",c);
+		}
+	*/	
+		a=c<<(remBegin);
+		c=fgetc(f);
+		c=(c&0x000000ff);
+		b=((c&0x000000ff)>>(8-remBegin));
+		*pBuff=(a|b);
+	/*
+		if(i<512){
+			fprintf(stderr," ,c':%x , a:%x, b:%x, *pbuff:%x\n",
+				c,a,b,*pBuff);
+		}
+	*/
+		pBuff++;
+	}
+	
+
+	int remainderBits=remEnd-remBegin;
+	fprintf(stderr, "remainderBits=%d\n",remainderBits);
+	if(remainderBits>0)
+	{
+		a=(c<<(remBegin));
+		fprintf(stderr,"a: %x",a);
+		*pBuff=(a & (0xff<<(8-remainderBits)));
+		fprintf(stderr," pBuff:%x\n",*pBuff);
+	}
+	else if(remainderBits<0)
+	{
+		pBuff--;
+		remainderBits=8+remainderBits;
+		a=*pBuff;
+		*pBuff=(a & (0xff<<(8-remainderBits)));
+	}
+	char endseq[10]={0x17,0x72,0x45,0x38,0x50,0x90,0x0,0x0,0x0,0x0};
+	endseq[6]=buff[10];
+	endseq[7]=buff[11];
+	endseq[8]=buff[12];
+	endseq[9]=buff[13];
+	/*
+	c=endseq[0];
+	a=*pBuff;
+	a=(a&0x000000ff);
+	fprintf(stderr, " endseq[0]=%x a=%x",endseq[0],a);
+	b=((c&0x000000ff)>>(8-remainderBits));
+	*pBuff=(a|b);
+		fprintf(stderr," pBuff:%x\n",*pBuff);
+	pBuff++;
+	*/
+	c=((*pBuff)&0x000000ff)>>(8-remainderBits);
+	for (i=0;i<=9;i++){
+		a=((c&0x000000ff)<<(8-remainderBits));
+		c=endseq[i];
+		b=((c&0x000000ff)>>(remainderBits));
+		pBuff[i]=(a|b);
+		//pBuff++;
+	}
+	pBuff+=10;
+	a=((c<<(8-remainderBits))&0x000000ff);
+	*pBuff=a;
+	for(i=0;i<=pBuff-buff;i++)
+		putc(buff[i],t);
+	fclose(t);
+	char *decompBuff=(char *)malloc(1000000);
+	unsigned int dSize=999999;
+	int sSize=pBuff-buff+1;
+	int r=BZ2_bzBuffToBuffDecompress(decompBuff,
+                                                &dSize,
+                                                buff,
+                                                sSize,
+                                                0,0);
+	free(buff);
+	
+	if(r!=BZ_OK)
+	{
+		fprintf(stderr, "BZ2:error %d\n",r);
+		free(decompBuff);
+		return NULL;
+	}
+	*pdSize=dSize;
+	return decompBuff;
 }
 
 string WikiMarkupGetter::GetLastArticleTitle()
