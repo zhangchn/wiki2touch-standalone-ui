@@ -24,6 +24,7 @@
 #define TITLEINDEX_H
 
 #include <string>
+#include "ConfigFile.h"
 using namespace std;
 
 class ArticleSearchResult
@@ -55,19 +56,26 @@ public:
 	~TitleIndex();
 	
 	ArticleSearchResult* FindArticle(string title, bool multiple=false);
+	ArticleSearchResult* FindArticle2(string title, bool multiple=false);
 	void DeleteSearchResult(ArticleSearchResult* articleSearchResult);
 	string DataFileName();
+	string PathToDataFile();
 	int NumberOfArticles();
+	bool UseManifest();
 	
 	string GetSuggestions(string phrase, int maxSuggestions);
+	string GetSuggestions2(string phrase, int maxSuggestions);
 	string GetRandomArticleTitle();
+	string GetRandomArticleTitle2();
 	
 	string ImageNamespace();
 	string TemplateNamespace();	
 
 private:
 	string  _dataFileName;
-	int		_numberOfArticles;
+	string	_pathToDataFile;
+	int	_numberOfArticles;
+	int	_numberOfBlocks;
 	bool	isChinese;
 	
 	fpos_t	_titlesPos;
@@ -75,14 +83,20 @@ private:
 	fpos_t	_indexPos_1;
 		
 	string GetTitle(FILE* f, int articleNumber, int indexNo);
+	string GetTitle2(FILE* fpIdxRecord, FILE* fpIdxSort, int articleNumber, int indexNo);
 	string PrepareSearchPhrase(string phrase);
 	
 	fpos_t	_lastBlockPos;
 	int	_lastArticlePos;
 	int _lastArticleLength;
+
+	unsigned long int _lastBlockNumber;
 	
 	string _imageNamespace;
 	string _templateNamespace;
+
+	bool _useManifest;
+	ConfigFile *_Manifest;
 };
 
 #endif

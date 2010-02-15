@@ -224,6 +224,17 @@ bool Settings::Init(int argc, char *argv[])
 					path = _path + dirbuf->d_name + "/articles_" + dirbuf->d_name + ".bin";
 					found = (stat(path.c_str(), &statbuf) >=0 && S_ISREG(statbuf.st_mode));
 				}
+				if ( !found )
+				{
+					path = _path + dirbuf->d_name + "/manifest";
+					found = (stat(path.c_str(), &statbuf) >=0 && S_ISREG(statbuf.st_mode));
+					if(found)
+					{
+						ConfigFile *pManifest= new ConfigFile(path);
+						string compressedXMLPath = pManifest->GetSetting("CompressedXML");
+						found = (stat((_path+ dirbuf->d_name+"/"+compressedXMLPath).c_str(),&statbuf) >=0 && S_ISREG(statbuf.st_mode));
+					}
+				}
 
 				if ( found )
 				{
