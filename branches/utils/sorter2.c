@@ -10,10 +10,36 @@ typedef struct idx_record{
 	char *name;
 } IdxRecord;
 
+static void tolower_utf8(char* data)
+{
+	if ( !data )
+		return;
+	
+	while ( *data )
+	{
+		unsigned char c = *data;
+		if ( c<0x80 )
+			*data = tolower(c);
+		else if ( c==0xc3 && *(data+1) )
+		{
+			data++; 		
+			
+			c = *data;
+			if ( c>=0x80 && c<=0x9e )
+				*data = c | 0x20;
+		}
+		data++;
+	}
+}
+
+
 int compare(const void *a, const void *b)
 {
 	IdxRecord *ra=(IdxRecord *)a;
 	IdxRecord *rb=(IdxRecord *)b;
+	tolower_utf8(ra->name);
+	tolower_utf8(rb->name);
+
 	//char *name_a=a->name;
 	//char *name_b=b->name;
 	return strcmp(ra->name, rb->name);
