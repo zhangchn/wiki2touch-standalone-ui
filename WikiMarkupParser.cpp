@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
+#include <map>
 
 #include "Settings.h"
 #include "WikiMarkupParser.h"
@@ -411,10 +412,40 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 		src = commentsRemoved;
 	else
 		commentsRemoved = NULL;
+	//strip it!
+	
+	bool handledOne = false;
+	bool stripFlag = false;
+
+	const wchar_t *src0=src;
+	wchar_t *src1;
+	map<wstring, wstring> stripMap;
+	wstring strippedSrc=strip(wstring(src),&stripMap);
+	int strippedLen=strippedSrc.length();
+	int srcLength;
+	const wchar_t* srcCurrent;
+	const wchar_t * srcPos;
+	if(stripMap.size()>0 || wcslen(src)<strippedLen)
+	{
+		//something stripped out!
+		stripFlag=true;		
+		srcPos=(const wchar_t *)malloc(sizeof(wchar_t)*(strippedLen+1));
+		src1=(wchar_t*)srcPos;
+		int count=0;
+		for(;count<strippedLen;count++)
+			src1[count]=strippedSrc[count];
+		src1[count]=L'\0';
+		srcCurrent = srcPos;
+		srcLength = strippedLen;
+	}else
+	{
 		
-	const wchar_t* srcPos = src;
-	const wchar_t* srcCurrent = src;
-	int srcLength = wcslen(src);
+		//const wchar_t* srcPos = src;
+		srcPos=src;
+		//const wchar_t* srcCurrent = src;
+		srcCurrent = src;
+		srcLength = wcslen(src);
+	}
 
 	int dstSize = 0;
 	int dstLength = srcLength;
@@ -436,10 +467,11 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 	
 	bool insideSpecialTags = false;
 	
-	bool handledOne = false;
 	
 	while ( (c=*srcCurrent++) )
 	{
+
+#if 0 //these should have been stripped out
 		switch ( state )
 		{
 			case 0:
@@ -525,6 +557,8 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 				} // c=='>' || c==' '
 				break;
 		} // switch (c)
+
+#endif
 		
 		if ( c=='{' && !insideSpecialTags ) 
 		{
@@ -538,6 +572,9 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 					int newDstSize = dstSize + size;
 					if ( newDstSize>dstLength )
 					{
+						if(stripFlag)
+						dstLength += ( size + (srcLength - (srcCurrent - src1) ) + 256);
+						else
 						dstLength += ( size + (srcLength - (srcCurrent - src) ) + 256);
 						dst = (wchar_t*) realloc(dst, (dstLength+1)*sizeof(wchar_t));
 						
@@ -629,6 +666,9 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 								if ( newDstSize>dstLength )
 								{
 									// add the current template size, the remaining bytes and 256
+									if(stripFlag)
+									dstLength += (size + (srcLength - (srcCurrent - src1) ) + 256);
+									else
 									dstLength += (size + (srcLength - (srcCurrent - src) ) + 256);
 									dst = (wchar_t*) realloc(dst, (dstLength+1)*sizeof(wchar_t));
 									
@@ -685,6 +725,19 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 		}
 		else
 			*dstPos = 0x0;
+		//unstrip
+		if(stripFlag){
+			wstring unstrippedDst = unstrip1 (wstring(dst), stripMap);
+			int unstrippedLen=unstrippedDst.length();
+			if(unstrippedLen>(dstPos-dst))
+				dst = (wchar_t *)realloc(dst, (unstrippedLen+1)*sizeof(wchar_t));
+			int count;
+			for(count=0;count<unstrippedLen;count++)
+				dst[count]=*(unstrippedDst.c_str()+count);
+			//wcsncpy(dst, unstrippedDst.c_str(), unstrippedLen);
+			dst[unstrippedLen]=0x0;
+			free(src1);
+		}
 	}
 		
 	//	if ( DEBUG )
@@ -696,7 +749,9 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 		// do not free commentsRemoved; if they are source is pointing to them
 		
 		free(dst);
-		return (wchar_t*) src;
+		//if(stripFlag)
+		//	return (wchar_t*) src0;
+		return (wchar_t*) src0;
 	}
 	else
 	{
@@ -1553,8 +1608,6 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 		return NULL;
 
 	/* Table helpers  */
-	if ( !wcscmp(text, L"!") )
-		return wstrdup(L"|");
 	else if ( !wcscmp(text, L"!-") )
 		return wstrdup(L"|-");
 	else if ( !wcscmp(text, L"!!") )
@@ -2927,6 +2980,13 @@ void WikiMarkupParser::Parse()
 			free(_pInput);
 			
 			_pInput = newInput;
+			// unstrip2
+			wchar_t *newInput2 = unstrip2(_pInput);
+			if(newInput2!=_pInput)
+			{
+				free(_pInput);
+				_pInput=newInput2;
+			}
 			_pCurrentInput = _pInput;
 			_inputLength = wcslen(_pInput);
 		}
@@ -4316,8 +4376,99 @@ int WikiMarkupParser::IsWikiTag(wchar_t* tagName)
 }
 
 
+wstring WikiMarkupParser::randomTag(){
+	char tag[16];
+	sprintf(tag, "%08x%08x", random(),random());
+	return CPPStringUtils::to_wstring(tag);
+}
+
+const wstring patternBegin[]={L"<nowiki>",L"<pre>",L"<source>"};
+const wstring patternEnd[]={L"</nowiki>",L"</pre>",L"</source>"};
+const wstring specials[]={L"{{!}}",L"{{!-}}",L"{{!!}}",
+			L"{{!-!}}",L"{{!+}}",L"{{!~}}",
+			L"{{(!}}",L"{{!)}}",L"{{((}}",L"{{))}}"};
+const wstring specialRepl[]={L"01",L"02",L"03",L"04",L"05",L"06",L"07",L"08",L"09",L"10"};
+const wstring specialRepl2[]={L"|",L"|-",L"||",
+			L"|-\n|",L"|+",L"|-\n!",
+			L"{|",L"|}",L"{{",L"}}"};
+
+wstring WikiMarkupParser::strip(wstring src, map<wstring,wstring> *stripMap){
+	if( src.length() ==0)
+		return wstring();
+	//wstring patternBegin[3];
+	//patternBegin[0]=CPPStringUtils::to_wstring("<nowiki>");
+	//patternBegin[1]=CPPStringUtils::to_wstring("<pre>");
+	//patternBegin[2]=CPPStringUtils::to_wstring("<source>");
+	int i;
+	int p1=0,p2=0;
+	for(i=0;i<3;i++){
+		while( (p1=src.find(patternBegin[i], p1)) != string::npos){
+			p2=src.find(patternEnd[i],p1);
+			if(p2!=string::npos){
+				int plen=p2-p1+patternEnd[i].length();
+				wstring tag=randomTag();
+				wstring match=src.substr(p1,plen);
+				//stripMap.insert(pair<wstring,wstring>(tag,match));
+				(*stripMap)[tag]=match;
+				src=src.replace(p1,plen,L"___STRIP__"+tag+L"__PIRTS___");
+			}
+			else{
+				break;
+			}
+		};
+	}
+	p1=0;
+	for(i=0;i<10;i++){
+		while( (p1=src.find(specials[i],p1)) != string::npos ){
+			
+			src=src.replace(p1,specials[i].length(), L"___S_STRIP__"+specialRepl[i]+L"__PIRTS_S___");
+		};
+	}
+	return src;
+}
+wstring WikiMarkupParser::unstrip1(wstring src, map<wstring,wstring> stripMap){
+	if(src.length()==0)
+		return wstring();
+	map<wstring,wstring>::iterator it;
+	wstring dst=src;
+	for (it=stripMap.begin();it!=stripMap.end();it++){
+		//cout<<CPPStringUtils::to_string(it->first)<<endl;
+		wstring match=L"___STRIP__"+it->first+L"__PIRTS___";
+		size_t p=dst.find(match);
+		if(p!=string::npos)
+			dst=dst.replace(p,match.length(),it->second);
+	}
+	return dst;
+}
 
 
+wchar_t* WikiMarkupParser::unstrip2(wchar_t *src){
+	if(src==NULL)
+		return NULL;
+	wstring s=wstring(src);
+	
+	//wchar_t *psrc=src; *pdst=dst;
+	bool unstripFlag=false;
+	int p=0;
+	for(int i=0;i<10;i++)
+		while((p=s.find(L"___S_STRIP__"+specialRepl[i]+L"__PIRTS_S___"))!= string::npos)
+		{
+			s=s.replace(p,12+2+12,specialRepl2[i]);
+			unstripFlag=true;
+		}
+	if(unstripFlag)
+	{
+		int l=s.length();
+		wchar_t *dst=(wchar_t*)malloc(sizeof(wchar_t)*(l+1));
+		wcsncpy(dst, s.c_str(), l);
+		dst[l]=0x0;
+		return dst;
+	}
+	else
+	{
+		return src;
+	}
+}
 
 
 
