@@ -24,6 +24,7 @@
 #define WIKIMARKUPPARSER_H
 
 #include "ConfigFile.h"
+#include <map>
 
 struct tagType {
 	wchar_t* name;
@@ -156,6 +157,11 @@ private:
 	wstring MonthName(int monthNo);
 	
 	int IsWikiTag(wchar_t* tagName);
+	
+	wstring randomTag();
+	wstring strip(wstring src, map<wstring,wstring> *stripMap);
+	wstring unstrip1(wstring src, map<wstring,wstring> stripMap);
+	wchar_t* unstrip2(wchar_t *src);
 };
 
 #endif WIKIMARKUPPARSER_H
