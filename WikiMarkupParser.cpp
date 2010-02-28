@@ -1685,6 +1685,73 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 	}
 
 	/* Formatting */         
+	else if ( startsWith(text, L"#tag:") )
+	{
+		const wchar_t *value = text + 5;
+		if ( !*value )
+			return NotHandledText(text);
+		wchar_t *pLastPipe = wcsrchr(value, L'|');
+		wchar_t *buffer;
+		fwprintf(stderr, L"#tag:%S\n",value);
+		if(pLastPipe)
+		{
+			//has some content
+			if(pLastPipe==value)
+			{
+				//empty result
+				return L"";
+			}
+			//else if(pLastPipe==wcschr(value, L'|'))
+			else
+			{
+				wchar_t *pFirstPipe=wcschr(value, L'|');
+				size_t tagNameLen= (pFirstPipe-value);
+
+				buffer = (wchar_t *)malloc(sizeof(wchar_t)*(wcslen(value)+tagNameLen+5));
+				buffer[0]=L'<';
+				const wchar_t *pValue=value;
+				wchar_t *pBuffer=buffer+1;
+				while(*pValue){
+					if(*pValue==L'|'){
+						if(pValue==pLastPipe)
+							*pBuffer=L'>';
+						else
+							*pBuffer=L' ';
+					}
+					else 
+						*pBuffer=*pValue;
+					pBuffer++;
+					pValue++;
+				}
+				*pBuffer=L'<';
+				pBuffer++;
+				*pBuffer=L'/';
+				pBuffer++;
+				
+				wcsncpy(pBuffer, value, tagNameLen);
+				pBuffer+=tagNameLen;
+				*pBuffer=L'>';
+				pBuffer++;
+				*pBuffer=0x0;
+				fwprintf(stderr, L"tagNameLen: %d,#tag:%S\n",tagNameLen, buffer);
+				return buffer;
+			}
+		}
+		else
+		{
+			//no content
+			int tagNameLen=wcslen(value);
+			buffer = (wchar_t *)malloc(sizeof(wchar_t)*(tagNameLen+5));
+			buffer[0]=L'<';
+			wcsncpy(buffer+1,value, tagNameLen);
+			buffer[tagNameLen+1]=L' ';
+			buffer[tagNameLen+2]=L'/';
+			buffer[tagNameLen+3]=L'>';
+			buffer[tagNameLen+4]=0x0;
+			fwprintf(stderr, L"tagNameLen: %d,#tag:%S\n",tagNameLen, buffer);
+			return buffer;
+		}
+	}
 	else if ( startsWith(text, L"#language:") )
 	{
 		const wchar_t* value = text + 10;
@@ -2191,6 +2258,40 @@ wchar_t* WikiMarkupParser::GetNextLine()
 	
 	return line;
 }
+
+wchar_t* WikiMarkupParser::GetTextUntilEndOfTag(const wchar_t *tagName)
+{
+	wchar_t* start = _pCurrentInput;
+	wchar_t* stop = NULL;
+	
+	int tagNameLen=wcslen(tagName);
+
+	wchar_t c;
+	while ( c=GetNextChar() )
+	{
+		if ( c==L'<' && ( Peek()==L'/' || isalpha(Peek())) )
+		{
+			if(wcsncmp(_pCurrentInput+1,tagName,tagNameLen)!=0)
+				continue;
+			// advance the pointer back to the start of the tag
+			_pCurrentInput--;
+
+			stop = _pCurrentInput;
+			break;
+		}
+	}
+	
+	if ( start>=stop )
+		return NULL;
+	
+	int length = stop-start;
+	wchar_t* result = (wchar_t*) malloc((length+1) * sizeof(wchar_t));
+	wcsncpy(result, start, length);
+	result[length] = 0x0;
+	
+	return result;
+}
+
 
 wchar_t* WikiMarkupParser::GetTextUntilNextTag()
 {
@@ -3601,7 +3702,8 @@ void WikiMarkupParser::Parse()
 								if ( !endTag && !emptyTag )
 								{
 									wchar_t* start = _pCurrentInput;
-									wchar_t* params = GetTextUntilNextTag();
+									//wchar_t* params = GetTextUntilNextTag();
+									wchar_t* params = GetTextUntilEndOfTag(L"ref");
 									
 									if ( params && *params )
 									{

@@ -128,6 +128,7 @@ private:
 	wchar_t* GetTextInSingleBrakets(wchar_t startBraket, wchar_t endBraket);
 	wchar_t* GetNextLine();
 	wchar_t* GetTextUntilNextTag();
+	wchar_t* GetTextUntilEndOfTag(const wchar_t *tagName);
 	
 	bool GetPixelUnit(wchar_t* src, int* width, int* height);
 	
