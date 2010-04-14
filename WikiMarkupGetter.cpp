@@ -263,7 +263,7 @@ char *WikiMarkupGetter::DecompressBlockWithBits(off_t bBegin, off_t bEnd, FILE *
 	//struct stat64 *buf;
 	//stat64(filename.c_str(), &buf);
 	//off_t size_of_f=buf->st_size *8;
-	fprintf(stderr, "bBegin,bEnd:%llx %llx\n",bBegin,bEnd);
+	//fprintf(stderr, "bBegin,bEnd:%llx %llx\n",bBegin,bEnd);
 	FILE *t=fopen ("tmp.bz2","wb");
 	if(!(bBegin<bEnd))
 	{
@@ -276,8 +276,8 @@ char *WikiMarkupGetter::DecompressBlockWithBits(off_t bBegin, off_t bEnd, FILE *
 	off_t byteEnd=(bEnd-remEnd)/8;
 	fseeko(f,byteBegin, SEEK_SET);
 	int i;
-	fprintf(stderr, "rb, bb,re, be:\n%d, %lld, %d, %lld\n",
-		remBegin, byteBegin, remEnd, byteEnd);
+	//fprintf(stderr, "rb, bb,re, be:\n%d, %lld, %d, %lld\n",
+	//	remBegin, byteBegin, remEnd, byteEnd);
 	char *buff=(char *)malloc (byteEnd-byteBegin+30);
 	buff[0]='B';buff[1]='Z';buff[2]='h';buff[3]='9';
 	buff[4]=0x31;buff[5]=0x41;buff[6]=0x59; 
@@ -308,13 +308,13 @@ char *WikiMarkupGetter::DecompressBlockWithBits(off_t bBegin, off_t bEnd, FILE *
 	
 
 	int remainderBits=remEnd-remBegin;
-	fprintf(stderr, "remainderBits=%d\n",remainderBits);
+	//fprintf(stderr, "remainderBits=%d\n",remainderBits);
 	if(remainderBits>0)
 	{
 		a=(c<<(remBegin));
-		fprintf(stderr,"a: %x",a);
+		//fprintf(stderr,"a: %x",a);
 		*pBuff=(a & (0xff<<(8-remainderBits)));
-		fprintf(stderr," pBuff:%x\n",*pBuff);
+		//fprintf(stderr," pBuff:%x\n",*pBuff);
 	}
 	else if(remainderBits<0)
 	{

@@ -158,6 +158,8 @@ unsigned char* ImageIndex::GetImage(string filename, int* size)
 	
 	unsigned char* data = (unsigned char*) malloc(_lastImageLength);
 	fseeko(f, _lastImagePos, SEEK_SET);
+	//debug for large images.bin
+	fprintf(stderr, "_lastImgaePos:%16llx \n",_lastImagePos);
 	*size = fread(data, 1, _lastImageLength, f);
 	fclose(f);
 	
@@ -178,22 +180,30 @@ string ImageIndex::GetFilename(FILE* f, int imageNumber)
 		return string();
 	
 	int error = fseeko(f, _indexPos + imageNumber*sizeof(int), SEEK_SET);
+	//debug for large file
+	off_t ftellpos=ftello(f);
+	fprintf(stderr, "after fseeko _indexPos+imageNumber*sizeofint:0x%llx \n",ftellpos);
 	if ( error )
 		return string();
 
-	int titlePos;
+	int titlePos=0;
 	size_t read = fread(&titlePos, sizeof(int), 1, f);
+	fprintf(stderr, "titlePos=0x%llx\n",titlePos);
 
 	if ( !read )
 		return string();
 
 	error = fseeko(f, _titlesPos + titlePos, SEEK_SET);
+	//debug for large file
+	ftellpos=ftello(f);
+	fprintf(stderr, "after fseeko _titlePos+titlePos:0x%llx \n",ftellpos);
 	if ( error )
 		return string();
 	
 	// store the article location and size for use in the future
 	fread(&_lastImagePos, sizeof(_lastImagePos), 1, f);
 	fread(&_lastImageLength, sizeof(_lastImageLength), 1, f);
+	fprintf(stderr, "_lastImagePos=0x%llx\n_lastImageLength=%d\n",_lastImagePos,_lastImageLength);
 	
 	string result;
 	unsigned char c = 0;
