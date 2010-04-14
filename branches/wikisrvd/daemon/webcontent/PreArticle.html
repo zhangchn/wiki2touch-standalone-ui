@@ -6,7 +6,9 @@
 	<link href="/stylesheets/mediawiki_common.css" type="text/css" rel="stylesheet">
 	<link href="/stylesheets/mediawiki_monobook.css" type="text/css" rel="stylesheet">
 	<link href="/stylesheets/wikisrv.css" type="text/css" rel="stylesheet">
+	<link href="/stylesheets/math.css" type="text/css" rel="stylesheet">
 	<link href="/images/apple-touch-icon.png" rel="apple-touch-icon" />	
+	<script src="/jsmath/jsMath.js"></script>
 	<script type="text/javascript">
 	function mathImgAlternative(text,node){
 		var e=document.createElement('span');
@@ -24,6 +26,19 @@
 		node.parentNode.insertBefore(e,node);
 		node.parentNode.removeChild(node);
 	}
+
+	function renderMath(e){
+		if(e.childNodes.length==2){
+			e.removeChild(e.childNodes[1]);
+		}
+		var math=document.createElement('span');
+		math.setAttribute('class','math');
+		math.innerText=e.innerText;
+		e.parentNode.insertBefore(math,e);
+		e.parentNode.removeChild(e);
+		jsMath.ProcessElement(math);
+	}
+	jsMath.Extension.Require("AMSmath");
 	</script>
 	<title>%ArticleTitle%</title>
 </head>

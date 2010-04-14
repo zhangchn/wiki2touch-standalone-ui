@@ -103,6 +103,8 @@ private:
 	
 	/* prefix of images, "image" is check everytime */
 	wchar_t* _imageNamespace;
+	/* count for recursions, preventing infinite loops */
+	int _recursionCount;
 		
 	ConfigFile* _languageConfig;
 	TitleIndex* _titleIndex;
@@ -163,6 +165,8 @@ private:
 	wstring strip(wstring src, map<wstring,wstring> *stripMap);
 	wstring unstrip1(wstring src, map<wstring,wstring> stripMap);
 	wchar_t* unstrip2(wchar_t *src);
+	int GetRecursionCount();
+	void SetRecursionCount(int count);
 };
 
 #endif WIKIMARKUPPARSER_H

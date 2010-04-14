@@ -41,6 +41,7 @@
 #define OUTPUT_GROWS	8192
 
 #define DEBUG false
+#define RECURSION_LIMIT 64
 
 const wchar_t* wikiTags[] = {L"unused", L"nowiki", L"pre", L"source", L"imagemap", L"code", L"ref", L"references", L"math", 0x0};
 const wchar_t* nsNames[]  = {L"unused", L"Talk", L"User", L"User_talk", L"Wikipedia", L"Wikipedia_talk", L"Image", L"Image_talk",
@@ -96,6 +97,7 @@ WikiMarkupParser::WikiMarkupParser(const wchar_t* languageCode, const wchar_t* p
 	_bold = -1;
 	
 	_externalLinkNo = 0;
+	_recursionCount = 0;
 	
 	_stop = false;
 
@@ -401,8 +403,11 @@ wchar_t* WikiMarkupParser::RemoveComments(const wchar_t* src)
 
 wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 {
+	if (_recursionCount>RECURSION_LIMIT)
+		return NULL;
 	if ( !src )
 		return NULL;
+	_recursionCount++;
 	
 //	if ( DEBUG )
 //	wprintf(L"---\r\n%S\r\b---", src);	
@@ -743,6 +748,9 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 	//	if ( DEBUG )
 	//	wprintf(L"---\r\n%S\r\b---", dst);	
 		
+	
+	
+	_recursionCount--;
 	if ( !handledOne )
 	{
 		// if there was nothing to free the dst pointer and return the src
@@ -2774,6 +2782,7 @@ void WikiMarkupParser::HandleInternalLink(const wchar_t* linkText)
 				{
 					WikiMarkupParser wikiMarkupParser(_languageCodeW, _pageName, false);
 					wikiMarkupParser.SetInput(imageDescription);
+					wikiMarkupParser.SetRecursionCount(_recursionCount);
 					wikiMarkupParser.Parse();
 					
 					AppendHtml(wikiMarkupParser.GetOutput());
@@ -2867,6 +2876,7 @@ void WikiMarkupParser::HandleInternalLink(const wchar_t* linkText)
 	{		
 		WikiMarkupParser wikiMarkupParser(_languageCodeW, _pageName, false);
 		wikiMarkupParser.SetInput(linkDescription);
+		wikiMarkupParser.SetRecursionCount(_recursionCount);
 		wikiMarkupParser.Parse();
 
 		Append(L"<a href=\"");
@@ -2938,6 +2948,8 @@ void WikiMarkupParser::HandleExternalLink(const wchar_t* linkText)
 
 		WikiMarkupParser wikiMarkupParser(_languageCodeW, _pageName, false);
 		wikiMarkupParser.SetInput(linkDescription);
+		wikiMarkupParser.SetRecursionCount(_recursionCount);
+
 		wikiMarkupParser.Parse();
 
 		Append(L"<a href=\"");
@@ -2971,6 +2983,7 @@ void WikiMarkupParser::HandleHeadline(const wchar_t* headlineText, int level)
 	
 	WikiMarkupParser wikiMarkupParser(_languageCodeW, _pageName, false);
 	wikiMarkupParser.SetInput(headlineText);
+	wikiMarkupParser.SetRecursionCount(_recursionCount);
 	wikiMarkupParser.Parse();
 	
 	// create a TOC entry
@@ -3863,9 +3876,9 @@ void WikiMarkupParser::Parse()
 									else
 									{
 										wchar_t *mathcontent=GetTextUntilNextTag();
-										Append(L"<span class='math'>");
+										Append(L"<span class='premath' onclick='javascript:renderMath(this);'>");
 										Append(mathcontent);
-										Append(L"</span>");
+										Append(L"<span style='color:red;'>(click to show maths...)</span></span>");
 									}
 								//#else
 								//	Append(GetTextUntilNextTag());
@@ -4406,6 +4419,7 @@ void WikiMarkupParser::InsertReferences()
 		reftext[ref->length] = 0x0;
 
 		wikiMarkupParser.SetInput(reftext);
+		wikiMarkupParser.SetRecursionCount(_recursionCount);
 		wikiMarkupParser.Parse();
 		AppendHtml(wikiMarkupParser.GetOutput());
 		
@@ -4573,4 +4587,12 @@ wchar_t* WikiMarkupParser::unstrip2(wchar_t *src){
 }
 
 
-
+int WikiMarkupParser::GetRecursionCount(){
+	return _recursionCount;
+}
+void WikiMarkupParser::SetRecursionCount(int count){
+	if (count>=0)
+		_recursionCount=count;
+	else
+		fprintf(stderr, "error:WikiMarkupParser::SetRecursionCount:negative value!\n");
+} 
