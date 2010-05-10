@@ -55,7 +55,7 @@ wstring WikiMarkupGetter::GetMarkupForArticle(const string utf8ArticleName)
 	if ( !titleIndex )
 		return wstring();
 	
-	ArticleSearchResult* articleSearchResult = titleIndex->FindArticle(utf8ArticleName);
+	ArticleSearchResult* articleSearchResult = titleIndex->FindArticle(utf8ArticleName,true);
 	
 	if ( !articleSearchResult )
 		return wstring();
