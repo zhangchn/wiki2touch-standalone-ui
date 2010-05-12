@@ -4165,6 +4165,10 @@ void WikiMarkupParser::ParseNoWikiArea(int tagType)
 	
 	wchar_t c;
 	wchar_t lastChar = -1;
+	// add <div> element for <source>
+	if(tagType == 3){
+		Append(L"<div style=\"wkSourceTag\"><pre>");
+	}
 	while ( !_stop && (c=GetNextChar()) )
 	{
 		switch ( state )
@@ -4173,6 +4177,25 @@ void WikiMarkupParser::ParseNoWikiArea(int tagType)
 				// in text
 				if ( c=='<' ) 
 				{
+					if ( tagType == 3 ){
+						if(Peek()!='/'){
+							//normal text
+							Append(L"&lt;");
+							break;
+						}
+						else if(Peek(1)=='s' && Peek(2)=='o' && Peek(3)=='u'
+							&& Peek(4)=='r' && Peek(5)=='c' && Peek(6)=='e' && Peek(7)=='>'){
+							//end of tag:</source>
+							if(tagType==3)
+								Append(L"</pre></div>");
+							Eat(8);
+							return;
+						}
+						else{
+							Append(c);
+							break;
+						}
+					}
 					lastChar = -1;
 					
 					if ( Peek()=='!' && Peek(1)=='-' && Peek(2)=='-' )
@@ -4221,7 +4244,12 @@ void WikiMarkupParser::ParseNoWikiArea(int tagType)
 							case L'\n':
 								Append(L"<br />");
 								break;
-								
+							case L'>':
+								Append(L"&gt;");
+								break;
+							case L'&':
+								Append(L"&amp;");
+								break;	
 							default: 
 								Append(c);
 								break;
@@ -4498,7 +4526,8 @@ wstring WikiMarkupParser::randomTag(){
 	return CPPStringUtils::to_wstring(tag);
 }
 
-const wstring patternBegin[]={L"<nowiki>",L"<pre>",L"<source>"};
+//const wstring patternBegin[]={L"<nowiki>",L"<pre>",L"<source>"};
+const wstring patternBegin[]={L"<nowiki",L"<pre",L"<source"};
 const wstring patternEnd[]={L"</nowiki>",L"</pre>",L"</source>"};
 const wstring specials[]={L"{{!}}",L"{{!-}}",L"{{!!}}",
 			L"{{!-!}}",L"{{!+}}",L"{{!~}}",
@@ -4518,7 +4547,9 @@ wstring WikiMarkupParser::strip(wstring src, map<wstring,wstring> *stripMap){
 	int i;
 	int p1=0,p2=0;
 	for(i=0;i<3;i++){
-		while( (p1=src.find(patternBegin[i], p1)) != string::npos){
+		//assume the the tags are well-structured
+		while( ((p1=src.find(patternBegin[i], p1)) != string::npos)
+			&& (src[p1]==L' '||src[p1]==L'>')){
 			p2=src.find(patternEnd[i],p1);
 			if(p2!=string::npos){
 				int plen=p2-p1+patternEnd[i].length();
