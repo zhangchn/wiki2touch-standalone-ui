@@ -174,3 +174,8 @@ a.wkExternalLink
 {
 	color: #ff0000;
 }
+.wkSourceTag
+{
+	background-color: #F9F9F9;
+	border: 1px dashed #2F6FAB;
+}
