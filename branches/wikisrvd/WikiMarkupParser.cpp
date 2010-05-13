@@ -3875,10 +3875,34 @@ void WikiMarkupParser::Parse()
 									} // if(!IsJSMathEnabled)
 									else
 									{
-										wchar_t *mathcontent=GetTextUntilNextTag();
-										Append(L"<span class='premath' onclick='javascript:renderMath(this);'>");
-										Append(mathcontent);
-										Append(L"<span style='color:red;'>(click to show maths...)</span></span>");
+										wchar_t *mathcontent=GetTextUntilEndOfTag(L"math");
+										bool isSimpleMath=false;
+										if(!wcschr(mathcontent,L'\\')){
+											Append(L"<span class='math'>");
+											isSimpleMath=true;
+										}
+										else{
+											Append(L"<span class='premath' onclick='javascript:renderMath(this);'>");
+										}
+										wchar_t *pMathcontent=mathcontent;
+										wchar_t c;
+										while(c=*pMathcontent++){
+											switch(c){
+											case L'<':
+												Append(L"&lt;");
+												break;
+											case L'>':
+												Append(L"&gt;");
+												break;
+											case L'&':
+												Append(L"&amp;");
+												break;
+											default:
+												Append(c);
+												break;
+											}
+										}
+										Append((isSimpleMath?L"</span>":L"<span style='color:red;'>(click to show maths...)</span></span>"));
 									}
 								//#else
 								//	Append(GetTextUntilNextTag());
