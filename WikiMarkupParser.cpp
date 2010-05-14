@@ -3646,7 +3646,7 @@ void WikiMarkupParser::Parse()
 						if (inTagName) 
 						{
 							if ( countTagChars++<511 )
-								*pTagName++ = help;
+								*pTagName++ = _to_wlower(help);
 						}
 						else {
 							if ( countAttributChars++<511 )
@@ -3675,9 +3675,18 @@ void WikiMarkupParser::Parse()
 						switch ( tagType )
 						{
 							case 1: // nowiki
-							case 2: // pre
 								if ( !endTag && !emptyTag ) 
 									ParseNoWikiArea(tagType);
+								break;							
+							case 2: // pre
+								if ( !endTag && !emptyTag ){ 
+									Append(L"<pre");
+									if (attributes[0])
+										Append(attributes);
+									Append(L">");
+									ParseNoWikiArea(tagType);
+									Append(L"</pre>");
+								}
 								break;							
 
 							case 3: // source
@@ -4299,6 +4308,7 @@ void WikiMarkupParser::ParseNoWikiArea(int tagType)
 						{
 							wchar_t tag[length+1];
 							wcsncpy(tag, startOfTagName, length);
+							to_lower(tag);
 							tag[length] = 0x0;
 							
 							if ( endTag )

@@ -105,7 +105,7 @@ jsMath.Easy = {
   //  loaded automatically.  E.g.
   //      ["plugins/mimeTeX.js","extensions/AMSsymbols.js"]
   //  
-  loadFiles: [],
+  loadFiles: ["extensions/AMSmath.js"],
   
   //
   //  List of fonts to load automatically.  E.g.
@@ -132,7 +132,7 @@ jsMath.Easy = {
   //  Allow jsMath to enter global mode?
   //  (Uses frames, so may not always work with complex web sites)
   //
-  allowGlobal: 1,
+  allowGlobal: 0,
   
   //
   //  Disable image fonts?  (In case you don't load them on your server.)
