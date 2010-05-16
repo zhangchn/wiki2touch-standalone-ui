@@ -13,7 +13,7 @@ By incorporating JSMath into Wiki2touch Server, which is a mini web server, most
 
 Some patches to the math content handling code in both WikiMarkupParser class, HTML template and style sheets has been committed to the branches codes, enabling the JSMath functionality.
 
-To toggle-on this feature, just run the daemon with an extra argument '-jsmath'. Or in other word, add an extra line of argument `<string>`-v`</string>` into the array of 'ProgramArguments' of the plist */System/Library/LaunchDaemons/com.wiki.wikisrvd.plist*.
+To toggle-on this feature, just run the daemon with an extra argument '-jsmath'. Or in other word, add an extra line of argument `<string>`-jsmath`</string>` into the array of 'ProgramArguments' of the plist */System/Library/LaunchDaemons/com.wiki.wikisrvd.plist*.
 
 In the browser, when a math equation is shown, the math environment should be labeled with green color, and a hint in red afterward. To show the result of a particular equation, just click on it. After rendering, the result will replace the original LaTeX content. (NOTE: first click in a page may be slow due to the loading of scripts.)
 
