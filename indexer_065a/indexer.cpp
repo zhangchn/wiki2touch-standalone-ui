@@ -155,7 +155,8 @@ static void XmlDecode(char* src)
 				else
 				{
 					*dst++ = '&';
-					strcat(dst, tag);
+					strcpy(dst, tag);
+					dst += (src - tag - 1);
 					*dst++ = ';';
 				}
 			}
