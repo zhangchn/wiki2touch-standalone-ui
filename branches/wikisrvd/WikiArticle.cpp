@@ -82,19 +82,28 @@ wstring WikiArticle::ProcessArticle(wstring article, string articleTitle)
 				newUtf8ArticleName = newUtf8ArticleName.substr(1);
 			
 			pos = newUtf8ArticleName.find("]]");
+			size_t posOfNumMark = newUtf8ArticleName.find("#");
+			string anchorName;
 			if ( pos!=string::npos )
 			{
-				newUtf8ArticleName = newUtf8ArticleName.substr(0, pos);
+				if (posOfNumMark!=string::npos) {
+					anchorName = newUtf8ArticleName.substr(posOfNumMark, pos-posOfNumMark);
+					newUtf8ArticleName = newUtf8ArticleName.substr(0, posOfNumMark);
+				}else {
+					newUtf8ArticleName = newUtf8ArticleName.substr(0, pos);
+				}
 				
 				while ( (pos=newUtf8ArticleName.find("_"))!=string::npos )
-					   newUtf8ArticleName.replace(pos, 1, " ", 1);
-						
+					newUtf8ArticleName.replace(pos, 1, " ", 1);
+				
 				WikiMarkupGetter wikiMarkupGetter(_languageCode);
 				article =  wikiMarkupGetter.GetMarkupForArticle(newUtf8ArticleName);
-			
 				redirected = L"<span class=\"wkRedirected\">(Redirected from " + CPPStringUtils::from_utf8w(_articleName) + L")</span>\r\n";
+				if (posOfNumMark!=string::npos) {
+					redirected += L"<script>setTimeout(\"document.location.href='"+CPPStringUtils::from_utf8w(anchorName)+L"';\",80);</script>";
+				}
 				_articleName = wikiMarkupGetter.GetLastArticleTitle();
-			}
+			}			
 		}
 	}
 		
