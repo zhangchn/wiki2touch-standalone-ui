@@ -787,7 +787,7 @@ string TitleIndex::GetTitle2(FILE* fpIdxRecord, FILE* fpIdxSort, int articleNumb
 	if ( articleNumber<0 || articleNumber>=_numberOfArticles  )
 		return string();
 	
-	int error = fseeko(fpIdxSort, articleNumber*sizeof(int), SEEK_SET);
+	int error = fseeko(fpIdxSort, articleNumber*sizeof(size_t), SEEK_SET);
 	if ( error )
 		return string();
 
