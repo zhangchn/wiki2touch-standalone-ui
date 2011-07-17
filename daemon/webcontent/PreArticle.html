@@ -13,7 +13,13 @@
 		    extensions: ["tex2jax.js","TeX/noErrors.js","TeX/AMSmath.js","TeX/AMSsymbols.js"],  
 		    "HTML-CSS": { imageFont: null },
 		    jax: ["input/TeX"],
-		    tex2jax: {inlineMath: [["$","$"]]}
+		    tex2jax: {inlineMath: [["$","$"]]},
+			TeX: {
+				// Anything MathJax does not readily support goes here:
+				Macros: {
+					infin: ['\\infty'],
+				}
+			}
 		  });
 	</script>
 
