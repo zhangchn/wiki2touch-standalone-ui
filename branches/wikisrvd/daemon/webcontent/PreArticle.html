@@ -6,39 +6,31 @@
 	<link href="/stylesheets/mediawiki_common.css" type="text/css" rel="stylesheet">
 	<link href="/stylesheets/mediawiki_monobook.css" type="text/css" rel="stylesheet">
 	<link href="/stylesheets/wikisrv.css" type="text/css" rel="stylesheet">
-	<link href="/stylesheets/math.css" type="text/css" rel="stylesheet">
 	<link href="/images/apple-touch-icon.png" rel="apple-touch-icon" />	
-	<script src="/jsmath/easy/load.js"></script>
+	<script type="text/javascript" src="/mathjax/MathJax.js">
+		  MathJax.Hub.Config({
+		    config: ["MMLorHTML.js"],
+		    extensions: ["tex2jax.js","TeX/noErrors.js","TeX/AMSmath.js","TeX/AMSsymbols.js"],  
+		    "HTML-CSS": { imageFont: null },
+		    jax: ["input/TeX"],
+		    tex2jax: {inlineMath: [["$","$"]]}
+		  });
+	</script>
+
 	<script type="text/javascript">
 	function mathImgAlternative(text,node){
 		var e=document.createElement('span');
 		var re=new RegExp('<br />','g');
-		//text=text.replace(re,"\n");
 		var lines=text.split('<br />');
 		for (var i in lines)
 		{
 			e.appendChild(document.createTextNode(lines[i]));
 			if(i<lines.length-1)e.appendChild(document.createElement('br'));
 		}
-		//var t=document.createTextNode(text);
-		//e.appendChild(t);
 		e.style.cssText="color:red";
 		node.parentNode.insertBefore(e,node);
 		node.parentNode.removeChild(node);
 	}
-
-	function renderMath(e){
-		if(e.childNodes.length==2){
-			e.removeChild(e.childNodes[1]);
-		}
-		var math=document.createElement('span');
-		math.setAttribute('class','math');
-		math.innerText=e.innerText;
-		e.parentNode.insertBefore(math,e);
-		e.parentNode.removeChild(e);
-		jsMath.ProcessElement(math);
-	}
-	jsMath.Extension.Require("AMSmath");
 	</script>
 	<title>%ArticleTitle%</title>
 </head>
