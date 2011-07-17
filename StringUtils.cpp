@@ -135,7 +135,7 @@ wchar_t* url_encode(const wchar_t* src)
 		
 		psrc++;
 	}
-	
+	*pdst = 0;
 	return dst;
 }
 

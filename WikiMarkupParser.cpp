@@ -3835,6 +3835,7 @@ void WikiMarkupParser::Parse()
 									wchar_t* pwchr;
 									wchar_t* raw=(wchar_t*)malloc(2048);
 									wchar_t* alt=(wchar_t*)malloc(2048);
+									wchar_t *alt0=alt;
 
 									mathwch = GetTextUntilNextTag();
 									wcsncpy(raw, mathwch,2047);
@@ -3880,19 +3881,12 @@ void WikiMarkupParser::Parse()
 									free(md5wstr);
 									free(md5imgtags);
 									free(raw);
-									free(alt);
+									free(alt0);
 									} // if(!IsJSMathEnabled)
 									else
 									{
 										wchar_t *mathcontent=GetTextUntilEndOfTag(L"math");
-										bool isSimpleMath=false;
-										if(!wcschr(mathcontent,L'\\')){
-											Append(L"<span class='math'>");
-											isSimpleMath=true;
-										}
-										else{
-											Append(L"<span class='premath' onclick='javascript:renderMath(this);'>");
-										}
+											Append(L"$");
 										wchar_t *pMathcontent=mathcontent;
 										wchar_t c;
 										while(c=*pMathcontent++){
@@ -3911,12 +3905,9 @@ void WikiMarkupParser::Parse()
 												break;
 											}
 										}
-										Append((isSimpleMath?L"</span>":L"<span style='color:red;'>(click to show maths...)</span></span>"));
+										Append(L"$");
 									}
-								//#else
-								//	Append(GetTextUntilNextTag());
-								//#endif //MATH_SUPPORT
-								}
+							}
 								break;
 							default:
 								break;
