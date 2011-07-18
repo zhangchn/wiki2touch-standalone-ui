@@ -1,4 +1,4 @@
-#summary How to generate and utilize MediaWiki data with wiki2touch.
+#summary How to generate and utilize MediaWiki data for wiki2touch.
 #labels Featured
 
 = Brief =
