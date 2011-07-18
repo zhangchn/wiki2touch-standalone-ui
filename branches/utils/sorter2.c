@@ -45,6 +45,18 @@ int compare(const void *a, const void *b)
 	return strcmp(ra->name, rb->name);
 }
 
+int ignore(const char *name)
+{
+	int ret=0;
+	ret = (
+			(strcasestr(name,"Category:")!=NULL) ||
+			(strcasestr(name,"Talk:")!=NULL) ||
+			(strcasestr(name,"File:")!=NULL) ||
+			(strcasestr(name,"User:")!=NULL) ||
+			(strcasestr(name,"MediaWiki:")!=NULL) ||
+			(strcasestr(name,"Portal:")!=NULL));
+	return ret;
+}
 int main(int argc, char *argv[]){
 	if(argc!=2)
 	{
@@ -90,6 +102,7 @@ int main(int argc, char *argv[]){
 
 				exit(1);
 			}
+			r[i].name[name_len]='\0';
 			//fseeko(fpIn,1,SEEK_CUR);
 			//printf("%s\n",r[i].name);
 			i++;
@@ -108,6 +121,11 @@ int main(int argc, char *argv[]){
 	int j;
 	FILE *fpOut=fopen("indexsort","w");
 	for(j=0;j<i;j++){
+		if(ignore(r[j].name)){
+		//	printf("ignore: %s\n",r[j].name);
+			continue;
+		}
+		//printf("%s\n",r[j].name);
 		size_t o=r[j].offset;
 		fwrite(&o, sizeof(size_t), 1, fpOut);
 		//free(r[i].name);
