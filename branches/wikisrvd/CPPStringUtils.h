@@ -58,14 +58,15 @@ public:
 
 
 class DBH 
-	{	
-	public:
-		DBH(const wchar_t* arg);
-		DBH(std::wstring arg);
+{	
+public:
+	DBH(const wchar_t* arg);
+	DBH(std::wstring arg);
 		
-		std::string result;
-		std::wstring data;
-		
-		void Print();
-	};
+	std::string result;
+	std::wstring data;
+	
+	void Print();
+	void PrintDescription();
+};
 

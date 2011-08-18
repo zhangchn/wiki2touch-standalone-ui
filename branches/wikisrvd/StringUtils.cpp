@@ -39,6 +39,41 @@ void display(const wchar_t* src)
 	pResult = result;
 }
 
+wchar_t* trim_left_multiline(wchar_t* src)
+{
+	if ( src==NULL )
+		return NULL;
+	
+	if ( !*src )
+		return src;
+	
+	wchar_t* dst = src;
+	while ( *src && *src<=0x20  )
+		src++;
+	
+	bool flag = false;
+	//if ( src==dst )
+	//	return src;
+	
+	wchar_t* result = dst;
+	while ( *src )
+	{
+		if ( *src == L'\n' )
+			flag = true;
+		else if ( *src > 0x20 )
+			flag = false;
+		else if ( flag )
+		{
+			src++;
+			continue;
+		}
+		*dst++ = *src++;
+	}
+	*dst = 0x0;
+	
+	return result;
+}
+
 wchar_t* trim_left(wchar_t* src)
 {
 	if ( src==NULL )

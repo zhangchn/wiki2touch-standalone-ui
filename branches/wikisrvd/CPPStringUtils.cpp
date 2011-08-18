@@ -620,7 +620,12 @@ void DBH::Print()
 	while ( *src )
 		printf("x%X", *src++);
 }
-
+void DBH::PrintDescription()
+{
+	const wchar_t *des = data.c_str();
+	while ( *des )
+		printf("%lc", *des++);
+}
 
 
 

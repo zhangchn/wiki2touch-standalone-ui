@@ -41,6 +41,9 @@ public:
 	wstring FormatSearchResults(ArticleSearchResult* articleSearchResult);
 	wstring ProcessArticle(wstring article, string articleTitle);
 
+	wstring RawSearchResults(ArticleSearchResult* articleSearchResult);
+	wstring GetRawArticle(ArticleSearchResult* articleSearchResult);
+	wstring GetRawArticle(string utf8articleName);
 private: 
 	string _articleName;
 	string _languageCode;

@@ -38,10 +38,26 @@
 		node.parentNode.insertBefore(e,node);
 		node.parentNode.removeChild(node);
 	}
+	// hack for wikibooks
+	var modifySuper = function() {
+			var links = document.getElementsByTagName('a');
+			var path = document.location.pathname;
+			var supername = path.substr(0, path.lastIndexOf('/')+1);
+			for (i=0;i<links.length;i++){
+				e = links[i];
+				var href=e.getAttribute('href');
+				if(href.indexOf('../')==0){
+					var newHref = href.replace('../',supername);
+					if(newHref.substr(newHref.length-1)=='/')
+						newHref=newHref.substr(0,newHref.length-1);
+					e.setAttribute('href',newHref);
+				}
+			}
+		}
 	</script>
 	<title>%ArticleTitle%</title>
 </head>
-<body class="wkBody">
+<body class="wkBody" onload="modifySuper();">
 	<div class="wkTitle" onclick="window.location.href='/';"><img src="/images/icon_search.png"/>&nbsp;%ArticleTitle%</div>
 	%RedirectedFrom%
 	<p />
