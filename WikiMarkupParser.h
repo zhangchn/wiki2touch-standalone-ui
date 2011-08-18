@@ -141,6 +141,7 @@ private:
 	void Append(wchar_t c);
 	void Append(const wchar_t* msg);
 	void AppendHtml(const wchar_t* html);
+	void AppendPre(const wchar_t* pre);
 
 	void HandleInternalLink(const wchar_t* linkText);
 	void HandleExternalLink(const wchar_t* linkText);

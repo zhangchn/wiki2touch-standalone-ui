@@ -410,7 +410,7 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 	_recursionCount++;
 	
 //	if ( DEBUG )
-//	wprintf(L"---\r\n%S\r\b---", src);	
+//	wprintf(L">>---\n%S\n---<<\n", src);	
 
 	wchar_t* commentsRemoved = RemoveComments(src);
 	if ( src!=commentsRemoved )
@@ -645,7 +645,7 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 						{
 							if ( DEBUG )
 								wprintf(L"\r\nExpanded Template:\r\n%S\r\n", expandedTemplate);
-							
+							trim_left_multiline(expandedTemplate);
 							int size = wcslen(expandedTemplate); 
 							if ( size>4 )
 							{
@@ -897,8 +897,9 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 				pos++;
 				
 				DBH Value(pos);
+				wchar_t *falseValue = wstrdup(pos);
 				
-				return wstrdup(pos);
+				return trim(falseValue);
 			}
 			else
 				return NULL;
@@ -1300,7 +1301,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 					wchar_t* value = equalPos + 1;
 					// trim(value);
 					
-					return wstrdup(value);
+					return wstrdup(trim_left(value));
 				}
 				else if ( !wcscmp(name, L"#default") || takeNextForDefault )
 				{
@@ -1309,7 +1310,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 					
 					wchar_t* value = equalPos + 1;
 					// trim(value);
-					defaultValue = wstrdup(value);
+					defaultValue = wstrdup(trim_left(value));
 					takeNextForDefault = false;
 				}
 			}
@@ -1330,6 +1331,209 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 			return defaultValue;
 		else
 			return NULL;
+	}
+	else if ( wcsstr(templateName,L"#titleparts:")==templateName )
+	{
+		wchar_t *pFirstParam, *pSecondParam;
+		wprintf(L"templateName:%ls\ntemplateText%ls\n",templateName,templateText);
+		DBH TT(templateText);
+		pos = templateText + 12;
+		int firstSegIndex=1, numOfSegIndex=0;
+		if ( *pos )
+		{
+			const wchar_t* titleStart = pos;
+			
+			pos = PosOfNextParamPipe(pos);
+
+			int length = pos - titleStart;			
+			
+			wchar_t title[length + 1];
+			if ( length )
+				wcsncpy(title, titleStart, length);
+			title[length] = 0x0;
+			trim(title);
+			
+			DBH Title(title);
+			printf("title:");
+			Title.PrintDescription();
+			printf("\n");
+			if ( wcsstr(title, L"{{") )
+			{
+				wchar_t* expandedTitle = ExpandTemplates(title);
+				if ( expandedTitle!=title )
+				{
+					int length = 2 + 12 + wcslen(expandedTitle) + wcslen(pos) + 2;
+					
+					wchar_t* newTemplate = (wchar_t*) malloc( (length+1) * sizeof(wchar_t) );
+					wcscpy(newTemplate, L"{{#titleparts:");
+					
+					wcscat(newTemplate, expandedTitle);
+					wcscat(newTemplate, pos);
+					wcscat(newTemplate, L"}}");
+					
+					free(expandedTitle);
+					wprintf(L"return:__%S__\n",newTemplate);
+					return newTemplate;
+				}
+			}
+			
+			if ( *pos==L'|' )
+			{
+				pos++;
+				const wchar_t* numOfSegStart = pos;
+				pos = PosOfNextParamPipe(pos);
+
+					length = pos - numOfSegStart;
+					
+					wchar_t numOfSeg[length + 1];
+					if ( length )
+						wcsncpy(numOfSeg, numOfSegStart, length);
+					numOfSeg[length] = 0x0;
+					trim(numOfSeg);
+
+					DBH NumOfSeg(numOfSeg);
+					printf("numOfSeg:");
+					NumOfSeg.PrintDescription();
+					printf("\n");
+					if ( wcsstr(numOfSeg, L"{{") )
+					{
+						wchar_t *expandedNumOfSeg = ExpandTemplates(numOfSeg);
+						if ( expandedNumOfSeg!=numOfSeg )
+						{
+							length = wcslen(expandedNumOfSeg)-wcslen(numOfSeg)+wcslen(templateText);
+							wchar_t* newTemplate = (wchar_t *) malloc((length+1)*sizeof(wchar_t));
+							wcsncpy(newTemplate, templateText , numOfSegStart-templateText);
+							wcscat(newTemplate, expandedNumOfSeg);
+							wcscat(newTemplate, pos);
+							wcscat(newTemplate, L"}}");
+							free(expandedNumOfSeg);
+	
+							wprintf(L"return:__%S__\n",newTemplate);
+							return newTemplate;
+						}
+					}
+					numOfSegIndex = watoi(numOfSeg);
+					printf("numOfSeg:%d\n",numOfSegIndex);
+			
+				if ( *pos==L'|' ) 
+				{
+					
+					pos++;
+					length = wcslen(pos);
+					wchar_t firstSeg[length+1];
+					if( length )
+					{
+						wcsncpy (firstSeg, pos, length);
+						firstSeg[length] = 0x0;
+						trim(firstSeg);
+						DBH FirstSeg(firstSeg);
+						printf("firstSeg:");
+						FirstSeg.PrintDescription();
+						printf("__end__\n");
+						wchar_t *expandedFirstSeg = firstSeg;
+						if ( wcsstr(numOfSeg, L"{{"))
+						{
+							expandedFirstSeg = ExpandTemplates(firstSeg);
+							if ( expandedFirstSeg!=firstSeg) {
+								firstSegIndex = watoi(expandedFirstSeg);
+								free(expandedFirstSeg);
+							}
+						} 
+						else
+							firstSegIndex = watoi(firstSeg);
+					}
+				}
+			}
+			// split title
+			if (firstSegIndex == 0)
+				firstSegIndex = 1;
+			wchar_t *slashPos=title;
+			int slashCount=0;
+			wchar_t *slashPositions[26];
+			slashPositions[0] = title-1;
+			for (;*slashPos;slashPos++)
+			{
+				if (*slashPos==L'/')
+				{
+					slashCount++;
+					slashPositions[slashCount]=slashPos;
+					if(slashCount>24)
+					{
+						slashCount=24;
+						break;
+					}
+				}
+			}
+			int titleLen = wcslen(title);
+			slashPositions[slashCount+1]=title+titleLen;
+			printf("slashcount:%d numOfSeg:%d firstSeg:%d\n",slashCount, numOfSegIndex, firstSegIndex);
+			if (numOfSegIndex==0 && firstSegIndex==1)
+			{
+				wchar_t *wholeTitle = (wchar_t*)malloc((titleLen+1)*sizeof(wchar_t));
+				wcscpy(wholeTitle, title);
+				printf("wholeTitle:__%ls__\n",wholeTitle);
+				return wholeTitle;
+			}
+			int effectiveEnd,effectiveBegin;
+			effectiveBegin = (firstSegIndex>0)?(firstSegIndex-1):(slashCount + 2 + firstSegIndex);
+			if (effectiveBegin < 0)
+				effectiveBegin = 0;
+			else if (effectiveBegin > slashCount)
+				effectiveBegin = slashCount ;
+			effectiveEnd = (numOfSegIndex>0)?(effectiveBegin+numOfSegIndex):(slashCount + numOfSegIndex);
+			if (effectiveEnd<=effectiveBegin)
+				effectiveEnd = effectiveBegin+1;
+			int spliceLength = slashPositions[effectiveEnd]-slashPositions[effectiveBegin];
+			wchar_t *result = (wchar_t*)malloc((spliceLength+1)*sizeof(wchar_t));
+			wcsncpy(result, slashPositions[effectiveBegin], spliceLength);
+			result[spliceLength]=0x0;
+			printf("final:__%ls__\n", result);
+			return result;
+	/*		if (firstSegIndex > 0) 
+			{
+				if (numOfSegIndex==0)
+				{
+					wchar_t *wholeTitle = (wchar_t*)malloc((wcslen(title)+1)*sizeof(wchar_t));
+					wcscpy(wholeTitle, title);
+					return wholeTitle;
+				}
+				int count;
+				wchar_t *pStart=title;
+				for(count=1;count<=numOfSegIndex && count<=25;count++){
+					if(count==firstSegIndex)
+						pStart=slashPos;
+					slashPos = wcsstr(slashPos+1,L"/");
+					if (!slashPos){
+						slashPos = title+wcslen(title);
+						break;
+					}
+				}
+				int len = slashPos-pStart;
+				wchar_t *result = (wchar_t*)malloc((len + 1)*sizeof(wchar_t));
+				wcsncpy(result, pStart, len);
+				return result;
+			} else {
+				int count;
+				wchar_t *slashPos=title+wcslen(title);
+				wchar_t *pStart=;
+				for(count=1;count<=numOfSegIndex && count<=25;count++){
+					if(count==firstSegIndex)
+						pStart=slashPos;
+					slashPos = wcsstr(slashPos+1,L"/");
+					if (!slashPos){
+						slashPos = title+wcslen(title);
+						break;
+					}
+				}
+				int len = slashPos-pStart;
+				wchar_t *result = (wchar_t*)malloc((len + 1)*sizeof(wchar_t));
+				wcsncpy(result, pStart, len);
+				return result;
+
+			}
+		*/
+		}
+		
 	}
 	else if ( *templateName==L'#' )
 	{
@@ -1741,7 +1945,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 				*pBuffer=L'>';
 				pBuffer++;
 				*pBuffer=0x0;
-				fwprintf(stderr, L"tagNameLen: %d,#tag:%S\n",tagNameLen, buffer);
+				//fwprintf(stderr, L"tagNameLen: %d,#tag:%S\n",tagNameLen, buffer);
 				return buffer;
 			}
 		}
@@ -1756,7 +1960,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 			buffer[tagNameLen+2]=L'/';
 			buffer[tagNameLen+3]=L'>';
 			buffer[tagNameLen+4]=0x0;
-			fwprintf(stderr, L"tagNameLen: %d,#tag:%S\n",tagNameLen, buffer);
+			//fwprintf(stderr, L"tagNameLen: %d,#tag:%S\n",tagNameLen, buffer);
 			return buffer;
 		}
 	}
@@ -2031,10 +2235,22 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 	{
 		wchar_t buffer[wcslen(_languageCodeW) + 1 + wcslen(_pageName) + 1];
 		wcscpy(buffer, _languageCodeW);
-		wcscat(buffer, L"/");
+		//wcscat(buffer, L"/");
+		wcscat(buffer, L":");
 		wcscat(buffer, _pageName);
 
 		return wstrdup(buffer);
+	}
+	else if ( !wcscmp(text, L"BOOKNAME") )
+	{
+		if ( _pageName==NULL )
+            return wstrdup(L"");
+
+        const wchar_t* slash = wcsstr(_pageName, L"/");
+        if ( slash )
+            return wstrndup(_pageName, slash-_pageName);
+        else
+            return wstrdup(_pageName);
 	}
 	else if ( !wcscmp(text, L"TALKSPACE") || !wcscmp(text, L"TALKSPACEE") ) 
 		return wstrdup(L"");
@@ -2426,6 +2642,32 @@ void WikiMarkupParser::AppendHtml(const wchar_t* html)
 	
 	while(*html!=0x0)
 		Append(*html++);
+}
+
+void WikiMarkupParser::AppendPre(const wchar_t* pre)
+{
+	const wchar_t *p = pre;
+	wchar_t c;
+	while ( (c=*p++)!=0x0 )
+	{
+//		wchar_t c = *p;
+		
+		switch(c){
+			case L'<':
+				Append(L"&lt;");
+				break;
+			case L'>':
+				Append(L"&gt;");
+				break;
+			case L'&':
+				Append(L"&amp;");
+				break;
+			default:
+				Append(c);
+				break;
+		}
+//		p++;
+	}
 }
 
 void WikiMarkupParser::PushTag(wchar_t* name, bool output)
@@ -3137,9 +3379,83 @@ void WikiMarkupParser::Parse()
 	
 		if ( _newLine ) 
 		{
-			// start of a new line, remove spaces
-			while ( c==0x20 )
-				c = GetNextChar();
+			//// start of a new line, remove spaces
+			//while ( c==0x20 )
+			//	c = GetNextChar();
+			if ( c==0x20 )
+			{
+				Append(L"<pre>");
+				do
+				{
+					WikiMarkupParser wikiMarkupParser(_languageCodeW, _pageName, false);
+		
+					wchar_t *line = GetNextLine();
+					int lineLength = 0;
+					wchar_t *pline = line;
+					bool hasUnsafe = false;
+					while(*pline++){
+						if (*pline == L'<' || *pline == L'>')
+						{
+							lineLength += 4;
+							hasUnsafe = true;
+						}
+						else if ( *pline == L'&' )
+						{
+							lineLength += 5;
+							hasUnsafe = true;
+						}
+						else
+							lineLength++;
+					}
+					if (hasUnsafe)
+					{
+						wchar_t *line2 = (wchar_t *)malloc(sizeof(wchar_t)*(lineLength+1));
+						wchar_t *pline2 = line2;
+						pline = line;
+						wchar_t c;
+						while ((c=*pline++)){
+							switch (c) {
+								case L'<':
+									wcsncpy(pline2, L"&lt;", 4);
+									pline2+=4;
+									break;
+								case L'>':
+									wcsncpy(pline2,L"&gt;",4);
+									pline2+=4;
+									break;
+								case L'&':
+									wcsncpy(pline2,L"&amp;",5);
+									pline2+=5;
+									break;
+								default:
+									*pline2=c;
+									pline2++;
+									break;
+							}
+						}
+						*pline2 = 0x0;
+						free(line);
+						line = line2;
+					}
+//					wprintf(L"line>>%S\n",line);
+					int offset = 0;
+					while(line[offset]==0x20)
+						offset++;
+					
+					wikiMarkupParser.SetInput( line+offset );
+					wikiMarkupParser.SetRecursionCount(_recursionCount);
+					wikiMarkupParser.Parse();
+					while(offset--)
+					{
+						Append(0x20);
+					}
+					AppendHtml(wikiMarkupParser.GetOutput());
+					free(line);
+					Append(L"\n");
+				} while( (c=GetNextChar())==0x20 );
+				Append(L"</pre>");
+			}
+				
 			
 			// close any unordered enumeration
 			if ( c!='*') 

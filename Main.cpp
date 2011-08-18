@@ -139,6 +139,125 @@ void send_file(FILE *f, char *path, struct stat *statbuf)
 	}
 }
 
+void send_raw(FILE *f, char* name)
+{
+	char help[strlen(name)+1];
+	char* pHelp = help;
+	char* pName = name;
+	
+	while ( *pName ) 
+	{
+		if ( *pName=='%' ) 
+		{
+			pName++;
+			
+			int number = 0;
+			
+			unsigned char digit = (unsigned char) *pName;
+			digit = toupper(digit);
+			if ( digit<='9' )
+				digit -= 48;
+			else
+				digit -= 55;
+			number = digit;
+			
+			if (*pName)
+				pName++;
+
+			digit = (unsigned char) *pName;
+			digit = toupper(digit);
+			if ( digit<='9' )
+				digit -= 48;
+			else
+				digit -= 55;
+			
+			number = number*16 + digit;
+			
+			*pHelp++ = number;
+		}
+		else
+			*pHelp++ = *pName;
+		
+		pName++;
+	}
+	*pHelp = 0x0;
+
+	char languageCode[3];	
+	pHelp = help;
+	if ( strlen(pHelp)>=3 && pHelp[2]==':' )
+	{
+		// change the "namespace" to a subfolder
+		pHelp[2] = '/';
+		redirect_to(f, (string("/raw/") + string(pHelp)).c_str());
+	}
+	else if ( strlen(pHelp)<3 || pHelp[2]!='/' )
+	{
+		// no prefix, try to use the default
+		redirect_to(f, (string("/raw/") + settings.DefaultLanguageCode() + "/" + string(name)).c_str());
+		return;
+	}
+	else 
+	{
+		strncpy(languageCode, pHelp, 2);
+		languageCode[2] = 0;
+	
+		strcpy(help, pHelp+3);
+		if ( !settings.IsLanguageInstalled(languageCode) )
+		{
+			if ( !strcmp(languageCode, "xx") )
+				send_error(f, 404, "Not found", NULL, "Language not installed.");
+			else
+				redirect_to(f, "/wiki/xx/Language not installed");
+			return;
+		}
+	}
+	
+	// the article name is already utf-8 encoded (by the browser?)
+	std::string articleName = help;	
+	
+	WikiArticle* wikiArticle = new WikiArticle(languageCode);
+	TitleIndex* titleIndex = settings.GetTitleIndex(languageCode);
+	ArticleSearchResult* articleSearchResult = titleIndex->FindArticle(articleName, true);
+	
+	if ( articleSearchResult )
+	{
+		if ( articleSearchResult->Next )
+		{
+			wstring searchResults = wikiArticle->RawSearchResults(articleSearchResult);
+			string data = CPPStringUtils::to_utf8(searchResults);
+			int length = data.length();
+			send_headers(f, 200, "OK", NULL, "text/plain; charset=utf-8", length, -1);		
+			fwrite(data.c_str(), 1, length, f);
+		}
+		else if ( articleSearchResult->Title()!=articleSearchResult->TitleInArchive() )
+			redirect_to(f, (string("/raw/") + string(languageCode) + string(":") + articleSearchResult->TitleInArchive()).c_str());
+		else 
+		{
+			std::wstring article = wikiArticle->GetRawArticle(articleSearchResult);	
+			if ( !article.empty() )
+			{
+				string data = CPPStringUtils::to_utf8(article);
+			
+				int length = data.length();
+				send_headers(f, 200, "OK", NULL, "text/plain; charset=utf-8", length, -1);
+
+				fwrite(data.c_str(), 1, length, f);
+			}
+			else if ( !strcmp(languageCode, "xx") && articleName=="Article not found" )
+				send_error(f, 404, "Not Found", NULL, "Article not found.");
+			else
+				redirect_to(f, "/wiki/xx/Article not found");
+
+		}
+	}
+	else if ( !strcmp(languageCode, "xx") && articleName=="Article not found" )
+		send_error(f, 404, "Not Found", NULL, "Article not found.");
+	else
+		redirect_to(f, "/wiki/xx/Article not found");
+	titleIndex->DeleteSearchResult(articleSearchResult);
+	
+	delete(wikiArticle);
+}
 void send_article(FILE *f, char* name)
 {
 	char help[strlen(name)+1];
@@ -454,6 +573,32 @@ int process(FILE *f)
 		}
 		else
 			send_article(f, &relativ_path[6]);
+	}
+	else if ( strlen(relativ_path)>=5 && strcasestr(relativ_path, "/raw/")==relativ_path ) 
+	{
+		/*
+		char* url = &relativ_path[5];
+		char languageCode[3];
+		strcpy(languageCode, settings.DefaultLanguageCode().c_str());
+		if ( strlen(url)>=3 && (url[2]=='/' || url[2]==':') )
+		{
+			languageCode[0] = tolower(*url++);
+			languageCode[1] = tolower(*url++);
+			languageCode[2] = 0;
+			url++;
+		}
+		else
+		{
+			strcpy(languageCode, settings.DefaultLanguageCode().c_str());
+		}
+		if( strlen(url)==0)
+		{
+			send_error(f, 404, "Raw-url is too short.", NULL, "");
+			return 0;
+		}
+		else
+		 */
+			send_raw(f, &relativ_path[5]);
 	}
 	else if ( strlen(relativ_path)>6 && strcasestr(relativ_path, "/ajax/")==relativ_path ) 
 	{

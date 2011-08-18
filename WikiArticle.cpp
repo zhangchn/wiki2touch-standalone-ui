@@ -205,5 +205,34 @@ wstring WikiArticle::FormatSearchResults(ArticleSearchResult* articleSearchResul
 	
 	return html;
 }
+#pragma mark raw content
+wstring WikiArticle::RawSearchResults(ArticleSearchResult* articleSearchResult)
+{
+	wstring resultText = wstring();
 
+	while ( articleSearchResult )
+	{
+		resultText.append(CPPStringUtils::to_wstring(articleSearchResult->TitleInArchive()));
+		resultText.append(L"\n");
+		articleSearchResult = articleSearchResult->Next;
+	}
+	
+	return resultText;
+}
 
+wstring WikiArticle::GetRawArticle(ArticleSearchResult* articleSearchResult)
+{
+	WikiMarkupGetter wikiMarkupGetter(_languageCode);
+	wstring article = wikiMarkupGetter.GetMarkupForArticle(articleSearchResult);
+	return article;
+	//return ProcessRaw(article, wikiMarkupGetter.GetLastArticleTitle());
+}
+
+wstring WikiArticle::GetRawArticle(string utf8articleName)
+{
+	WikiMarkupGetter wikiMarkupGetter(_languageCode);
+	wstring article = wikiMarkupGetter.GetMarkupForArticle(utf8articleName);
+	
+	return article;
+	//return ProcessRaw(article, wikiMarkupGetter.GetLastArticleTitle());
+}

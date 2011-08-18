@@ -30,6 +30,7 @@ extern const wchar_t* monNameAbbr[];
 extern const wchar_t* monName[];
 
 void display(const wchar_t* src);
+wchar_t* trim_left_multiline(wchar_t* src);
 wchar_t* trim_left(wchar_t* src);
 wchar_t* trim_right(wchar_t* src);
 wchar_t* trim(wchar_t* src);
