@@ -2928,7 +2928,14 @@ void WikiMarkupParser::HandleInternalLink(const wchar_t* linkText)
 			
 			// swprintf has problems with %S and chars > 255 so don't use it here
 			wcscpy(imageTag, L"<img alt=\"");
-			wcscat(imageTag, imageDescription);
+			if(wcslen(imageDescription)>128)
+			{
+				wcsncat(imageTag, imageDescription, 124);
+				wcsncat(imageTag, L"...", 3);
+				//imageDescription[128] = L'\0'; 
+			}
+			 else
+				wcscat(imageTag, imageDescription);
 			wcscat(imageTag, L"\" src=\"./Image:");
 			wcscat(imageTag, imageFilename);
 			wcscat(imageTag, L"\"");
@@ -4202,7 +4209,7 @@ void WikiMarkupParser::Parse()
 									else
 									{
 										wchar_t *mathcontent=GetTextUntilEndOfTag(L"math");
-											Append(L"$");
+											Append(L"#000Dx8*#");
 										wchar_t *pMathcontent=mathcontent;
 										wchar_t c;
 										while(c=*pMathcontent++){
@@ -4221,7 +4228,7 @@ void WikiMarkupParser::Parse()
 												break;
 											}
 										}
-										Append(L"$");
+										Append(L"#000Dx9*#");
 									}
 							}
 								break;
