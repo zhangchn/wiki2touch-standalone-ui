@@ -13,7 +13,7 @@
 		    extensions: ["tex2jax.js","TeX/noErrors.js","TeX/AMSmath.js","TeX/AMSsymbols.js"],  
 		    "HTML-CSS": { imageFont: null },
 		    jax: ["input/TeX"],
-		    tex2jax: {inlineMath: [["$","$"]]},
+		    tex2jax: {inlineMath: [["#000Dx8*#","#000Dx9*#"]]},
 			TeX: {
 				// Anything MathJax does not readily support goes here:
 				Macros: {
@@ -46,7 +46,7 @@
 			for (i=0;i<links.length;i++){
 				e = links[i];
 				var href=e.getAttribute('href');
-				if(href.indexOf('../')==0){
+				if(href && href.indexOf('../')==0){
 					var newHref = href.replace('../',supername);
 					if(newHref.substr(newHref.length-1)=='/')
 						newHref=newHref.substr(0,newHref.length-1);
