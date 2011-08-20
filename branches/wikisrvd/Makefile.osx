@@ -1,0 +1,26 @@
+########### CC #######################
+#CC=/Developer/usr/bin/gcc
+CC=`which clang` #/Developer/usr/bin/gcc
+CFLAGS=	-I. -DMATH_SUPPORT -g -O2 -DDEBUG=0
+############# LD #######################
+LD=$(CC)
+LDFLAGS= -bind_at_load \
+	-lgcc_s.1 \
+	-lstdc++.6 -lbz2 -g
+
+
+FILES=CPPStringUtils.o StopWatch.o ConfigFile.o StringUtils.o \
+	ImageIndex.o TitleIndex.o \
+	Main.o WikiArticle.o \
+	MathIndex.o WikiMarkupGetter.o \
+	Settings.o WikiMarkupParser.o
+
+
+%.o:	%.cpp
+		$(CC) -c $(CFLAGS) -x c++ $< -o $@
+
+all: wikisrvd
+
+wikisrvd: $(FILES)
+	$(LD) $(LDFLAGS) -v -o $@ $^
+
