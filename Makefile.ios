@@ -1,0 +1,59 @@
+########### CC #######################
+##CC=/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/arm-apple-darwin9-gcc-4.0.1 
+IOS_VERSION=4.3
+CC=/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/arm-apple-darwin10-g++-4.0.1 
+INCPATH1=/Developer/Platforms/iPhoneOS.platform/Developer/usr/include 
+INCPATH2=/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS$(IOS_VERSION).sdk/usr/include 
+INCPATH3=/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS$(IOS_VERSION).sdk/System/Library/Frameworks 
+INCPATH5=/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS$(IOS_VERSION).sdk/usr/include/c++/4.0.0 
+INCPATH6=/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS$(IOS_VERSION).sdk/usr/lib/gcc/arm-apple-darwin10/4.0.1/include/
+INCPATH7=/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS$(IOS_VERSION).sdk/usr/include/c++/4.0.0/arm-apple-darwin9
+CFLAGS=	-I$(INCPATH1) \
+        -I$(INCPATH2) \
+        -I$(INCPATH3) \
+	-I$(INCPATH5) \
+	-I$(INCPATH6) \
+	-I$(INCPATH7) \
+        -I. -DMATH_SUPPORT
+	#--with-sysroot=/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS2.2.1.sdk/ \
+############# LD #######################
+LD=$(CC)
+LDPATH1=/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/gcc/arm-apple-darwin10/4.0.1 
+LDPATH2=/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS$(IOS_VERSION).sdk/usr/lib 
+LDPATH3=/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS$(IOS_VERSION).sdk/usr/lib/system
+FPATH=/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS$(IOS_VERSION).sdk/System/Library/Frameworks 
+LDFLAGS=-lobjc \
+	-framework CoreFoundation \
+	-framework Foundation \
+	-framework UIKit \
+	-framework CoreGraphics \
+	-L$(LDPATH1) \
+	-L$(LDPATH2) \
+	-L$(LDPATH3) \
+	-F$(FPATH) \
+	-bind_at_load \
+	-lgcc_s.1 \
+	-lstdc++.6 -lbz2 -mthumb
+
+CODE_SIGN="iPhonePwn"
+CODESIGN_ALLOCATE=/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/codesign_allocate
+
+
+FILES=CPPStringUtils.o StopWatch.o ConfigFile.o StringUtils.o \
+	ImageIndex.o TitleIndex.o \
+	Main.o WikiArticle.o \
+	MathIndex.o WikiMarkupGetter.o \
+	Settings.o WikiMarkupParser.o
+
+
+%.o:	%.cpp
+		$(CC) -c $(CFLAGS) -x c++ $< -o $@
+
+all: wikisrvd
+
+wikisrvd: $(FILES)
+	$(LD) $(LDFLAGS) -v -o $@ $^
+	env CODESIGN_ALLOCATE=$(CODESIGN_ALLOCATE) codesign -fs $(CODE_SIGN) wikisrvd
+
+install:
+	cp wikisrvd daemon/
