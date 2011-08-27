@@ -23,6 +23,8 @@
 #include "TitleIndex.h"
 #include "CPPStringUtils.h"
 #include <stdio.h>
+#include <sys/stat.h>
+#include <stdlib.h>
 
 const char* ARTICLES_DATA_NAME = "articles";
 const char* ARTICLES_DATA_EXTENSION = ".bin";
@@ -137,10 +139,16 @@ TitleIndex::TitleIndex(string pathToDataFile)
 	}
 	else if( _useManifest && f)
 	{
+		/*
 		if(EOF==sscanf((_Manifest->GetSetting("NumberOfArticles")).c_str(), "%d", &_numberOfArticles))
 		{
 			_numberOfArticles = -1;
 		}
+		*/
+		struct stat statOfSort;
+		stat((_pathToDataFile+"/indexsort").c_str(), &statOfSort);
+		_numberOfArticles = statOfSort.st_size/sizeof(size_t);
+
 		if(EOF==sscanf((_Manifest->GetSetting("NumberOfBlocks")).c_str(), "%d", &_numberOfBlocks))
 		{
 			_numberOfBlocks = -1;
@@ -847,7 +855,6 @@ string TitleIndex::GetSuggestions2(string phrase, int maxSuggestions)
 		return suggestions;
 
 	FILE *fpIdxRecord, *fpIdxSort, *fpBlkOffset;
-
 	fpIdxRecord=fopen((_pathToDataFile+"/indexrecord").c_str(), "rb");
 	fpIdxSort=fopen((_pathToDataFile+"/indexsort").c_str(), "rb");
 	fpBlkOffset=fopen((_pathToDataFile+"/blockoffset").c_str(), "rb");

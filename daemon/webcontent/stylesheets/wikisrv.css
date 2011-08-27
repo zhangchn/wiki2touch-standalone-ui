@@ -182,4 +182,6 @@ a.wkExternalLink
 
 .infobox {
 	float: right;
+	border: 1px solid #A3B1BF;
+	text-align: center;
 }

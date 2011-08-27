@@ -1,7 +1,7 @@
 ########### CC #######################
 #CC=/Developer/usr/bin/gcc
 CC=`which clang` #/Developer/usr/bin/gcc
-CFLAGS=	-I. -DMATH_SUPPORT -g -O2 -DDEBUG=0
+CFLAGS=	-I. -DMATH_SUPPORT -g -O3 -DDEBUG=0
 ############# LD #######################
 LD=$(CC)
 LDFLAGS= -bind_at_load \
