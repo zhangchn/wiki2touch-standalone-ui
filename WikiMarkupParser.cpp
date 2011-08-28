@@ -458,17 +458,17 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 	wchar_t* dstPos = dst;
 	*dstPos = 0x0;
 	
-	const wchar_t* startOfTagName = NULL;
-	const wchar_t* endOfTagName = NULL;
+//	const wchar_t* startOfTagName = NULL;
+//	const wchar_t* endOfTagName = NULL;
 		
-	int endTag = 0;
+//	int endTag = 0;
 	
-	int state = 0;
+//	int state = 0;
 	wchar_t c;
 	
-	const wchar_t* nowiki = NULL;
-	const wchar_t* pre = NULL;
-	const wchar_t* source = NULL;
+//	const wchar_t* nowiki = NULL;
+//	const wchar_t* pre = NULL;
+//	const wchar_t* source = NULL;
 	
 	bool insideSpecialTags = false;
 	
@@ -476,7 +476,8 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 	while ( (c=*srcCurrent++) )
 	{
 
-#if 0 //these should have been stripped out
+//these should have been stripped out
+/*
 		switch ( state )
 		{
 			case 0:
@@ -563,7 +564,7 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 				break;
 		} // switch (c)
 
-#endif
+*/
 		
 		if ( c=='{' && !insideSpecialTags ) 
 		{
@@ -1334,7 +1335,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 	}
 	else if ( wcsstr(templateName,L"#titleparts:")==templateName )
 	{
-		wchar_t *pFirstParam, *pSecondParam;
+//		wchar_t *pFirstParam, *pSecondParam;
 		wprintf(L"templateName:%ls\ntemplateText%ls\n",templateName,templateText);
 		DBH TT(templateText);
 		pos = templateText + 12;
@@ -2207,7 +2208,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 
 		const wchar_t* slash = NULL;
 		const wchar_t* help = _pageName;
-		while ( help=wcsstr(help, L"/") )
+		while ( (help=wcsstr(help, L"/")) )
 		{
 			help++;
 			slash = help;
@@ -2396,7 +2397,7 @@ wchar_t* WikiMarkupParser::GetTextInDoubleBrakets(wchar_t startBraket, wchar_t e
 	
 	int braketCount = 2;
 	int count = 0;
-	while ( c=Peek(count) )
+	while ( (c=Peek(count)) )
 	{
 		if ( c==startBraket )
 			braketCount++;
@@ -2431,7 +2432,7 @@ wchar_t* WikiMarkupParser::GetTextInSingleBrakets(wchar_t startBraket, wchar_t e
 	wchar_t c;
 	int braketCount = 1;
 	int count = 0;
-	while ( c=Peek(count) )
+	while ( (c=Peek(count)) )
 	{
 		if ( c==startBraket )
 			braketCount++;
@@ -2461,7 +2462,7 @@ wchar_t* WikiMarkupParser::GetNextLine()
 {
 	int count = 0;
 	wchar_t c;
-	while ( c=Peek(count) )
+	while ( (c=Peek(count)) )
 	{
 		if ( c=='\n' )
 			break;
@@ -2491,7 +2492,7 @@ wchar_t* WikiMarkupParser::GetTextUntilEndOfTag(const wchar_t *tagName)
 	int tagNameLen=wcslen(tagName);
 
 	wchar_t c;
-	while ( c=GetNextChar() )
+	while ( (c=GetNextChar()) )
 	{
 		if ( c==L'<' && ( Peek()==L'/' || isalpha(Peek())) )
 		{
@@ -2523,7 +2524,7 @@ wchar_t* WikiMarkupParser::GetTextUntilNextTag()
 	wchar_t* stop = NULL;
 	
 	wchar_t c;
-	while ( c=GetNextChar() )
+	while ( (c=GetNextChar()) )
 	{
 		if ( c==L'<' && ( Peek()==L'/' || isalpha(Peek())) )
 		{
@@ -2908,7 +2909,7 @@ void WikiMarkupParser::HandleInternalLink(const wchar_t* linkText)
 					width = 180;
 			}
 			
-			wchar_t* cssClass = NULL;
+			const wchar_t* cssClass = NULL;
 			
 			wchar_t buffer[64];
 			
@@ -3289,7 +3290,7 @@ wchar_t* WikiMarkupParser::GetParams(bool stopAtExclamtionAlso)
 	int curlyBrakets = 0;
 	
 	wchar_t c;
-	while ( c=Peek(count) )
+	while ( (c=Peek(count)) )
 	{
 		if ( !curlyBrakets )
 		{
@@ -3552,7 +3553,7 @@ void WikiMarkupParser::Parse()
 					int count = 1;
 					int i = 0;
 					wchar_t c;
-					while ( c=Peek(i) )
+					while ( (c=Peek(i)) )
 					{
 						if ( c=='*' )
 							count++;
@@ -3606,7 +3607,7 @@ void WikiMarkupParser::Parse()
 					int count = 1;
 					int i = 0;
 					wchar_t c;
-					while ( c=Peek(i) )
+					while ( (c=Peek(i)) )
 					{
 						if ( c=='#' )
 							count++;
@@ -4870,7 +4871,7 @@ int WikiMarkupParser::IsWikiTag(wchar_t* tagName)
 
 wstring WikiMarkupParser::randomTag(){
 	char tag[16];
-	sprintf(tag, "%08x%08x", random(),random());
+	sprintf(tag, "%08ld%08ld", random(),random());
 	return CPPStringUtils::to_wstring(tag);
 }
 
