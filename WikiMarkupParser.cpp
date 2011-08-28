@@ -4774,7 +4774,7 @@ void WikiMarkupParser::InsertReferences()
 	if ( !_references )
 		return;
 	
-	Append(L"<ol class=\"wkReferenceList\"\r\n");
+	Append(L"<ol class=\"wkReferenceList\">\r\n");
 	int count = 1;
 	REF* ref = (REF*) _references;
 	while ( ref )
