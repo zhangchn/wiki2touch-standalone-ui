@@ -712,7 +712,11 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 		int size = (srcCurrent-srcPos - 1); 
 		if ( size>0 )
 		{
-			int newDstSize = dstSize + size;
+			bool tableProtection = ( wcsncmp(srcPos,L"{|",2) == 0 );
+
+			int newDstSize = dstSize + size ;
+			if (tableProtection) 
+				newDstSize++;
 			if ( newDstSize>dstLength )
 			{
 				dstLength = newDstSize;
@@ -720,14 +724,15 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 				
 				dstPos = dst + dstSize;
 			}
-			
-			wcsncpy(dstPos, srcPos, size);
+			if (tableProtection)
+				*dst++ = L'\n';
+			wcsncpy(dstPos + (tableProtection?1:0), srcPos, size);
 			dstPos += size;
 			*dstPos = 0x0;
 			
 			dstSize += size;
 			
-			srcPos = srcCurrent;		
+			srcPos = srcCurrent;	
 		}
 		else
 			*dstPos = 0x0;
@@ -767,7 +772,7 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 		// everything is in dst now
 		if ( commentsRemoved )
 			free(commentsRemoved);
-		
+		wprintf(L"\nsrc:\n%S\nExpandedTemplate:\r\n%S\r\n",src,dst);
 		return dst;
 	}
 }
@@ -3387,9 +3392,6 @@ void WikiMarkupParser::Parse()
 	
 		if ( _newLine ) 
 		{
-			//// start of a new line, remove spaces
-			//while ( c==0x20 )
-			//	c = GetNextChar();
 			if ( c==0x20 )
 			{
 				Append(L"<pre>");
@@ -3400,66 +3402,56 @@ void WikiMarkupParser::Parse()
 					wchar_t *line = GetNextLine();
 					int lineLength = 0;
 					wchar_t *pline = line;
-					bool hasUnsafe = false;
-					while(*pline++){
-						if (*pline == L'<' || *pline == L'>')
+					while ( *pline++ ){
+						if ( *pline == L'<' || *pline == L'>' )
 						{
 							lineLength += 4;
-							hasUnsafe = true;
 						}
 						else if ( *pline == L'&' )
 						{
 							lineLength += 5;
-							hasUnsafe = true;
 						}
 						else
 							lineLength++;
 					}
-					if (hasUnsafe)
-					{
-						wchar_t *line2 = (wchar_t *)malloc(sizeof(wchar_t)*(lineLength+1));
-						wchar_t *pline2 = line2;
-						pline = line;
-						wchar_t c;
-						while ((c=*pline++)){
-							switch (c) {
-								case L'<':
-									wcsncpy(pline2, L"&lt;", 4);
-									pline2+=4;
-									break;
-								case L'>':
-									wcsncpy(pline2,L"&gt;",4);
-									pline2+=4;
-									break;
-								case L'&':
-									wcsncpy(pline2,L"&amp;",5);
-									pline2+=5;
-									break;
-								default:
-									*pline2=c;
-									pline2++;
-									break;
-							}
+					lineLength+=13;
+					wchar_t *line2 = (wchar_t *)malloc(sizeof(wchar_t)*(lineLength+1));
+					wchar_t *pline2 = line2;
+					pline = line;
+					wchar_t c;
+					wcsncpy(pline2,L"<span>",6);
+					pline2+=6;
+					while ((c=*pline++)){
+						switch (c) {
+							case L'<':
+								wcsncpy(pline2, L"&lt;", 4);
+								pline2+=4;
+								break;
+							case L'>':
+								wcsncpy(pline2,L"&gt;",4);
+								pline2+=4;
+								break;
+							case L'&':
+								wcsncpy(pline2,L"&amp;",5);
+								pline2+=5;
+								break;
+							default:
+								*pline2=c;
+								pline2++;
+								break;
 						}
-						*pline2 = 0x0;
-						free(line);
-						line = line2;
 					}
-//					wprintf(L"line>>%S\n",line);
-					int offset = 0;
-					while(line[offset]==0x20)
-						offset++;
+					wcsncpy(pline2,L"</span>",7);
+					pline2+=7;
+					*pline2 = 0x0;
+					free(line);
+					line = line2;
 					
-					wikiMarkupParser.SetInput( line+offset );
+					wikiMarkupParser.SetInput(line); 
 					wikiMarkupParser.SetRecursionCount(_recursionCount);
 					wikiMarkupParser.Parse();
-					while(offset--)
-					{
-						Append(0x20);
-					}
 					AppendHtml(wikiMarkupParser.GetOutput());
 					free(line);
-					Append(L"\n");
 				} while( (c=GetNextChar())==0x20 );
 				Append(L"</pre>");
 			}
@@ -3786,6 +3778,22 @@ void WikiMarkupParser::Parse()
 						if ( *line ) 
 						{
 							Append(L"<tr ");
+                            wchar_t *pClass = wcsstr(line, L"class");
+                            if (pClass) {
+                                wchar_t *pClassVal = wcsstr(&pClass[5], L"=\"hiddenStructure\"");
+                                if (pClassVal>pClass+5) {
+                                    wchar_t classParam[pClassVal-pClass-4];
+                                    wcsncpy(classParam, &pClass[5],pClassVal-pClass-5);
+                                    classParam[pClassVal-pClass-5]=L'\0';
+                                    trim(classParam);
+                                    if (*classParam) {
+                                        //remove attribute 'class'
+                                        while ( pClass < pClassVal+18 ) {
+                                            *pClass++=L' ';
+                                        }
+                                    }
+                                }
+                            }
 							Append(line);
 							Append(L">\n");
 						}
