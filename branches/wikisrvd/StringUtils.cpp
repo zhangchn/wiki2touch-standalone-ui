@@ -48,7 +48,7 @@ wchar_t* trim_left_multiline(wchar_t* src)
 		return src;
 	
 	wchar_t* dst = src;
-	while ( *src && *src<=0x20  )
+	while ( *src && *src<=0x20 && *src!=L'\n' )
 		src++;
 	
 	bool flag = false;
@@ -242,7 +242,7 @@ int watoi(const wchar_t* src)
 	int result = 0;
 	
 	char c;
-	while ( c=*src++ )
+	while ( (c=*src++) )
 	{
 		if ( c<0x30 || c>0x39 )
 			return result;
