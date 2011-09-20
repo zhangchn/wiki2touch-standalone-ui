@@ -185,3 +185,18 @@ a.wkExternalLink
 	border: 1px solid #A3B1BF;
 	text-align: center;
 }
+
+/* navbox from wikipedia */
+table.navbox{ border:1px solid #aaa;width:100%;margin:auto;clear:both;font-size:88%;text-align:center;padding:1px}
+table.navbox + table.navbox{ margin-top:-1px; }
+.navbox-title,.navbox-abovebelow,table.navbox th{text-align:center; padding-left:1em;padding-right:1em}
+.navbox-group{ white-space:nowrap;text-align:right;font-weight:bold;padding-left:1em;padding-right:1em}
+.navbox,.navbox-subgroup{background:#fdfdfd; }
+.navbox-list{border-color:#fdfdfd; }
+.navbox-title,table.navbox th{background:#ccccff; }
+.navbox-abovebelow,.navbox-group,.navbox-subgroup .navbox-title{background:#ddddff; }
+.navbox-subgroup .navbox-group,.navbox-subgroup .navbox-abovebelow{background:#e6e6ff; }
+.navbox-even{background:#f7f7f7; }
+.navbox-odd{background:transparent; }
+.collapseButton{ float:right; font-weight:normal; text-align:right; width:auto}
+.navbox .collapseButton{ width:6em; }
