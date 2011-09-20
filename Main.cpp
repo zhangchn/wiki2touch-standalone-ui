@@ -453,7 +453,63 @@ int process(FILE *f)
 	strcat(path, relativ_path);
 	
 	fseek(f, 0, SEEK_CUR); // Force change of stream direction
-	
+#if DEBUG
+	if (strcasecmp(method, "POST") == 0)
+	{
+		char field[512];
+		int content_length = 0;
+		char *key, *value;
+		char post_buf[4096];
+		while (fgets(field,512,f))
+		{
+			printf("POST: %s", field);
+			key = strtok(field, " ");
+			value = strtok(NULL, "\r");
+			if (key && (strcasecmp(key, "Content-Length:") == 0) )
+			{
+				content_length = atoi(value);
+				printf("length:%d\n", content_length);
+			}
+			if ( (strlen(field) == 2) && (field[0] == '\r' && field[1] == '\n') )
+			{
+				printf("POST finished\n");
+				if (content_length > 0)
+				{
+					if(fread( post_buf, sizeof(char), content_length, f)==0)
+					{
+						printf("POST read error\n");
+						return -1;
+					}
+					else
+					{
+						post_buf[content_length] = '\0';
+						printf("POST content:%s\n",post_buf);
+						break;
+					}
+				}
+				else 
+				{
+					return 0;
+				}
+			}
+		}
+		if (strlen(relativ_path)>15 && strstr(relativ_path, "/ajax/testexp/")==relativ_path)
+		{
+			//char languageCode[3];
+			//strcpy(languageCode, settings.DefaultLanguageCode().c_str());
+
+			char *lang = &relativ_path[14];
+			WikiMarkupParser parser(CPPStringUtils::to_wstring(string(lang)).c_str(), L"TestPageName");
+			parser.SetInput(CPPStringUtils::to_wstring(string(post_buf)).c_str());
+			parser.Parse();
+			string result = CPPStringUtils::to_utf8(parser.GetOutput());
+			int length = result.length();
+			send_headers(f, 200, "OK", NULL, "text/html; charset=utf-8", length, -1);
+			fwrite(result.c_str(), 1, length, f);
+		}
+		return 0;
+	}
+#endif //DEBUG
 	if (strcasecmp(method, "GET") != 0)
 		send_error(f, 501, "Not supported", NULL, "Method is not supported.");
 	else if ( strlen(relativ_path)>=6 && strcasestr(relativ_path, "/wiki/")==relativ_path ) 
