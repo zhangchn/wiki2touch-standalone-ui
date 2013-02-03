@@ -286,38 +286,43 @@ char* LoadFile(const char* filename)
 	if ( !filename || !*filename )
 		return NULL;
 
+    off_t size;
+    size_t read = 0;
+    char* buffer = NULL;
 	FILE* f = fopen(filename, "rb");
 	if ( !f ) 
 		return NULL;
 	
 	int error = fseek(f, 0, SEEK_END);
-	off_t size;
-			  
-	if ( !error )
-		error = fgetpos(f, &size);
-			  
-	if ( !error )
-		error = fseek(f, 0, SEEK_SET);
-			  
-	size_t read = 0;
-	char* buffer = NULL;
-			  
-	if ( !error && size>0 ) 
-	{
-		buffer = (char*) malloc(size + 1);
-		read = fread(buffer, 1, size, f);
-	}
+    if (error)
+    {
+        goto err;
+    }
+
+    size = ftello(f);
+    error = fseek(f, 0, SEEK_SET);
+    if ( !error && size>0 )
+    {
+        buffer = (char*) malloc(size + 1);
+        read = fread(buffer, 1, size, f);
+        if ( !read )
+        {
+            free(buffer);
+            goto err;
+        }
+    } else
+        goto err;
+
 	fclose(f);
-	
-	if ( !read )
-	{
-		free(buffer);
-		return NULL;
-	}
-	
+
 	buffer[read] = 0;
-	
+
 	return buffer;
+    
+err:
+    fclose(f);
+    return NULL;
+
 }
 
 wchar_t** split(const wchar_t* src, wchar_t splitChar)

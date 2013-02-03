@@ -20,11 +20,10 @@
  *  along with Wiki2Touch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
 #include <cstdlib>
 #include <memory.h>
 #include <wchar.h>
-//#include <cwchar>
+#include <cstdio>
 #include <bzlib.h>
 #include <sys/stat.h>
 
@@ -424,30 +423,30 @@ wstring WikiMarkupGetter::GetTemplate(const string utf8TemplateName, string temp
 			off_t size;
 			
 			if ( !error )
-				error = fgetpos(f, &size);
-
-			if ( !error )
+            {
+				size = ftello(f);
 				error = fseek(f, 0, SEEK_SET);
+                size_t read = 0;
+                char* buffer = NULL;
+
+                if ( !error && size>0 ) {
+                    buffer = (char*) malloc(size);
+                    read = fread(buffer, 1, size, f);
+                }
+
+                fclose(f);
+
+                if ( read )
+                {
+                    string result = string(buffer);
+                    free(buffer);
+                    return CPPStringUtils::from_utf8w(result);
+                }
+                
+                if ( buffer )
+                    free(buffer);
+            }
 			
-			size_t read = 0;
-			char* buffer = NULL;
-			
-			if ( !error && size>0 ) {
-				buffer = (char*) malloc(size);
-				read = fread(buffer, 1, size, f);
-			}
-				
-			fclose(f);
-			
-			if ( read ) 
-			{
-				string result = string(buffer);
-				free(buffer);
-				return CPPStringUtils::from_utf8w(result);
-			}
-			
-			if ( buffer )
-				free(buffer);
 		}	
 	}
 	
