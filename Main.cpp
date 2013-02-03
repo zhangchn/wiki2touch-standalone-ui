@@ -46,7 +46,7 @@
 
 #define DIRECTORY_LISTING_ALLOWED false
 
-#if HAVE_SRANDOMDEV
+#if (HAVE_SRANDOMDEV || defined(__APPLE__))
 	#define RANDOMIZE()	srandomdev()
 #elif HAVE_SRANDOM
 	#define RANDOMIZE()	srandom(time(NULL))

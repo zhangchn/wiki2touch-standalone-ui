@@ -22,6 +22,7 @@
 
 #include "Settings.h"
 #include <cstdlib>
+#include <cstring>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -216,7 +217,7 @@ bool Settings::Init(int argc, char *argv[])
 		struct dirent* dirbuf;
 		while ( (dirbuf=readdir(dir)) )
 		{
-			if ( ((dirbuf->d_type==DT_DIR) || (dirbuf->d_type==DT_LNK)) && (dirbuf->d_namlen>=2) && dirbuf->d_name[0]!='.' )
+			if ( ((dirbuf->d_type==DT_DIR) || (dirbuf->d_type==DT_LNK)) && dirbuf->d_name[0]!='.' )
 			{
 				path = _path + dirbuf->d_name + "/articles.bin";
 				bool found = (stat(path.c_str(), &statbuf) >=0 && S_ISREG(statbuf.st_mode));
@@ -255,7 +256,7 @@ bool Settings::Init(int argc, char *argv[])
 					struct stat dirstatbuf;
 					if ( stat(cache.c_str(), &dirstatbuf) >=0 )
 					{
-						if ( dirstatbuf.st_ctimespec.tv_sec>statbuf.st_ctimespec.tv_sec )
+						if ( dirstatbuf.st_ctime>statbuf.st_ctime )
 						{
 							// article.bin is newer, clear the cache
 							// rmdir(cache.c_str());
