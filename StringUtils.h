@@ -23,7 +23,8 @@
 #ifndef STRINGUTILS_H
 #define STRINGUTILS_H
 
-#include <wchar.h>
+#include <cwchar>
+#include <cwctype>
 //#include <cwchar>
 
 extern const wchar_t* dayName[];

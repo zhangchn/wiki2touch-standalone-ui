@@ -23,6 +23,9 @@
  */
 
 #include <cstdlib>
+#include <cstdio>
+#include <cwchar>
+#include <cwctype>
 #include "StringUtils.h"
 
 const wchar_t* dayName[] = {L"Sunday", L"Monday", L"Tuesday", L"Wednesday", L"Thursday", L"Friday", L"Saturday", 0x0};
@@ -198,7 +201,7 @@ void to_upper(wchar_t* src)
 
 bool isintalpha(wchar_t c)
 {
-	return isalpha(c) || (c>=0xc0 && c<=0xff);
+	return iswalpha(c) || (c>=0xc0 && c<=0xff);
 }
 
 wchar_t* wstrdup(const wchar_t* src)
@@ -274,7 +277,7 @@ bool startsWithCase(const wchar_t* src, const wchar_t* prefix)
 	
 	while ( *src && *prefix )
 	{
-		if ( tolower(*src++)!=tolower(*prefix++) )
+		if ( towlower(*src++)!=towlower(*prefix++) )
 			break;
 	}
 	
