@@ -51,6 +51,7 @@
 #elif HAVE_SRANDOM
 	#define RANDOMIZE()	srandom(time())
 #endif
+
 int _sock = -1;
 char* _webContentDir;
 
@@ -983,7 +984,7 @@ int main(int argc, char *argv[])
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(settings.Port());
 	sin.sin_addr.s_addr = settings.Addr();
-#if HAVE_SIN_LEN
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
 	sin.sin_len = sizeof(sin);
 #endif
 	bind(_sock, (struct sockaddr *) &sin, sizeof(sin));
