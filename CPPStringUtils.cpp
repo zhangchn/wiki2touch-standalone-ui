@@ -21,7 +21,10 @@
  */
 
 #include "CPPStringUtils.h"
-
+#include <algorithm>
+#include <cwctype>
+#include <cstdio>
+#include <cwchar>
 using namespace std;
 
 inline char    _to_lower(const char c)     {if (((unsigned char)c)<0x80) return tolower(c); else if (((unsigned char)c)>=0xc0 && ((unsigned char) c)<0xdf) return (unsigned char)c+0x20; else return c;};
@@ -621,13 +624,13 @@ void DBH::Print()
 {
 	const wchar_t* src = data.c_str();
 	while ( *src )
-		printf("x%X", *src++);
+		wprintf(L"x%X", *src++);
 }
 void DBH::PrintDescription()
 {
 	const wchar_t *des = data.c_str();
 	while ( *des )
-		printf("%lc", *des++);
+		wprintf(L"%lc", *des++);
 }
 
 
