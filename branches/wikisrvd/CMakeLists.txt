@@ -4,7 +4,10 @@ project(wikisrvd C CXX)
 include(CheckTypeSize)
 include(CheckIncludeFiles)
 include(CheckFunctionExists)
+include(CheckLibraryExists)
 include(CheckStructHasMember)
+
+find_library(CRYPYO_PATH crypto)
 
 check_include_file(bzlib.h HAVE_BZLIB_H)
 if(!HAVE_BZLIB_H)
@@ -44,4 +47,4 @@ add_executable(wikisrvd
 				StringUtils.cpp
 				WikiArticle.cpp
 				WikiMarkupParser.cpp)
-TARGET_LINK_LIBRARIES(wikisrvd bz2)
+TARGET_LINK_LIBRARIES(wikisrvd bz2 crypto)
