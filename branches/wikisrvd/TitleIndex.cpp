@@ -36,9 +36,9 @@ typedef struct
 {
 	char languageCode[2];				// 2 bytes
 	unsigned int numberOfArticles;		// 4 bytes
-	fpos_t	titlesPos;					// 8 bytes
-	fpos_t	indexPos_0;					// 8 bytes
-	fpos_t	indexPos_1;					// 8 bytes; the second one has discritcs removed or traditional chineses chars are converted to simpified chineses chars
+	off_t	titlesPos;					// 8 bytes
+	off_t	indexPos_0;					// 8 bytes
+	off_t	indexPos_1;					// 8 bytes; the second one has discritcs removed or traditional chineses chars are converted to simpified chineses chars
 	unsigned char version;				// 1 byte
 	char reserved1[1];					// 1 byte
 	char imageNamespace[32];			// namespace prefix for images   (without the colon)
@@ -540,7 +540,7 @@ string TitleIndex::GetTitle(FILE* f, int articleNumber, int indexNo)
 	if ( !f || articleNumber<0 || articleNumber>=_numberOfArticles  )
 		return string();
 	
-	fpos_t indexPos = _indexPos_0;
+	off_t indexPos = _indexPos_0;
 	if ( indexNo==1 && _indexPos_1 )
 		indexPos = _indexPos_1;
 	
@@ -548,7 +548,7 @@ string TitleIndex::GetTitle(FILE* f, int articleNumber, int indexNo)
 	if ( error )
 		return string();
 
-	fpos_t titlePos = 0;
+	off_t titlePos = 0;
 	size_t read = fread(&titlePos, sizeof(int), 1, f);
 
 	if ( !read )
@@ -580,7 +580,7 @@ string TitleIndex::GetTitle(FILE* f, size_t articleNumber, size_t indexNo)
 	if ( !f || articleNumber>=_numberOfArticles  )
 		return string();
 
-	fpos_t indexPos = _indexPos_0;
+	off_t indexPos = _indexPos_0;
 	if ( indexNo==1 && _indexPos_1 )
 		indexPos = _indexPos_1;
 
@@ -588,7 +588,7 @@ string TitleIndex::GetTitle(FILE* f, size_t articleNumber, size_t indexNo)
 	if ( error )
 		return string();
 
-	fpos_t titlePos = 0;
+	off_t titlePos = 0;
 	size_t read = fread(&titlePos, sizeof(int), 1, f);
 
 	if ( !read )
@@ -630,7 +630,7 @@ string TitleIndex::PrepareSearchPhrase(string phrase)
 
 /* search result class */
 
-ArticleSearchResult::ArticleSearchResult(string title, string titleInArchive, fpos_t blockPos, fpos_t articlePos, int articleLength)
+ArticleSearchResult::ArticleSearchResult(string title, string titleInArchive, off_t blockPos, off_t articlePos, int articleLength)
 {
 	Next = NULL;
 	
@@ -653,12 +653,12 @@ string ArticleSearchResult::TitleInArchive()
 }
 									
 
-fpos_t ArticleSearchResult::BlockPos()
+off_t ArticleSearchResult::BlockPos()
 {
 	return _blockPos;
 }
 
-fpos_t ArticleSearchResult::ArticlePos()
+off_t ArticleSearchResult::ArticlePos()
 {
 	return _articlePos;
 }
