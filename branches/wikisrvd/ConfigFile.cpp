@@ -21,6 +21,7 @@
  */
 
 #include "ConfigFile.h"
+#include <cstdio>
 
 typedef struct tagSetting
 {

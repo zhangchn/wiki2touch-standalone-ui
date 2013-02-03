@@ -46,6 +46,11 @@
 
 #define DIRECTORY_LISTING_ALLOWED false
 
+#if HAVE_SRANDOMDEV
+	#define RANDOMIZE()	srandomdev()
+#elif HAVE_SRANDOM
+	#define RANDOMIZE()	srandom(time())
+#endif
 int _sock = -1;
 char* _webContentDir;
 
@@ -348,7 +353,7 @@ void send_article(FILE *f, char* name)
 			int error = fseek(file, 0, SEEK_END);
 			off_t length;
 			
-			error = fgetpos(file, &length);
+			length = ftello(file);
 			
 			if ( !error )
 				error = fseek(file, 0, SEEK_SET);
@@ -846,8 +851,8 @@ int process(FILE *f)
 						
 						fprintf(f, "<A HREF=\"%s%s\">", de->d_name, S_ISDIR(statbuf.st_mode) ? "/" : "");
 						fprintf(f, "%s%s", de->d_name, S_ISDIR(statbuf.st_mode) ? "/</A>" : "</A> ");
-						if (de->d_namlen < 32) fprintf(f, "%*s", 32 - de->d_namlen, "");
-						
+//						if (de->d_namlen < 32) fprintf(f, "%*s", 32 - de->d_namlen, "");
+
 						if (S_ISDIR(statbuf.st_mode))
 							fprintf(f, "%s\r\n", timebuf);
 						else
@@ -895,7 +900,8 @@ void sigterm(int sig)
 
 int main(int argc, char *argv[])
 {
-	srandomdev();
+	//srandomdev();
+	RANDOMIZE();
 	settings.Init(argc, argv);
 	
 	if ( settings.Verbose() )
@@ -977,8 +983,9 @@ int main(int argc, char *argv[])
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(settings.Port());
 	sin.sin_addr.s_addr = settings.Addr();
+#if HAVE_SIN_LEN
 	sin.sin_len = sizeof(sin);
-	
+#endif
 	bind(_sock, (struct sockaddr *) &sin, sizeof(sin));
 
 	if ( listen(_sock, 25)==0 )
