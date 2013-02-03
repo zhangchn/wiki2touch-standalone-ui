@@ -36,8 +36,8 @@ typedef struct
 	char languageCode[2];
 	unsigned int numberOfImages;
 	
-	fpos_t	titlesPos;
-	fpos_t	indexPos;
+	off_t	titlesPos;
+	off_t	indexPos;
 	char reserved[10];
 } IMAGEFILEHEADER;
 #pragma pack (pop)

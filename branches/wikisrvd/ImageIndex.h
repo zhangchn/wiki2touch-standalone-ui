@@ -40,12 +40,12 @@ private:
 	string	_dataFileName;
 	int		_numberOfImages;
 	
-	fpos_t	_titlesPos;
-	fpos_t	_indexPos;
+	off_t	_titlesPos;
+	off_t	_indexPos;
 	
 	string GetFilename(FILE* f, int imageNumber);
 	
-	fpos_t			_lastImagePos;
+	off_t			_lastImagePos;
 	unsigned int	_lastImageLength;
 };
 
