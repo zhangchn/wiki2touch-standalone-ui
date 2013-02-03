@@ -49,7 +49,7 @@
 #if HAVE_SRANDOMDEV
 	#define RANDOMIZE()	srandomdev()
 #elif HAVE_SRANDOM
-	#define RANDOMIZE()	srandom(time())
+	#define RANDOMIZE()	srandom(time(NULL))
 #endif
 
 int _sock = -1;
