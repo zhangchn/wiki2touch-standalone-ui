@@ -30,13 +30,13 @@ using namespace std;
 class ArticleSearchResult
 {
 public:
-	ArticleSearchResult(string title, string titleInArchive, fpos_t blockPos, fpos_t articlePos, int articleLength);
+	ArticleSearchResult(string title, string titleInArchive, off_t blockPos, off_t articlePos, int articleLength);
 	
 	string Title();
 	string TitleInArchive();
 	
-	fpos_t BlockPos();
-	fpos_t ArticlePos();
+	off_t BlockPos();
+	off_t ArticlePos();
 	int ArticleLength();
 	
 	ArticleSearchResult* Next;
@@ -44,8 +44,8 @@ public:
 private:
 	string _title;
 	string _titleInArchive;
-	fpos_t _blockPos;
-	fpos_t _articlePos;
+	off_t _blockPos;
+	off_t _articlePos;
 	int _articleLength;
 };
 
@@ -78,16 +78,16 @@ private:
 	int	_numberOfBlocks;
 	bool	isChinese;
 	
-	fpos_t	_titlesPos;
-	fpos_t	_indexPos_0;
-	fpos_t	_indexPos_1;
+	off_t	_titlesPos;
+	off_t	_indexPos_0;
+	off_t	_indexPos_1;
 		
 	string GetTitle(FILE* f, int articleNumber, int indexNo);
     string GetTitle(FILE* f, size_t articleNumber, size_t indexNo);
 	string GetTitle2(FILE* fpIdxRecord, FILE* fpIdxSort, long articleNumber, size_t indexNo);
 	string PrepareSearchPhrase(string phrase);
 	
-	fpos_t	_lastBlockPos;
+	off_t	_lastBlockPos;
 	int	_lastArticlePos;
 	int _lastArticleLength;
 
