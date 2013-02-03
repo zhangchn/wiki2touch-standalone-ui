@@ -24,14 +24,14 @@
 #include "CPPStringUtils.h"
 #include <stdio.h>
 #include <sys/stat.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 const char* ARTICLES_DATA_NAME = "articles";
 const char* ARTICLES_DATA_EXTENSION = ".bin";
 
 #define SIZEOF_POSITION_INFORMATION 16
 
-#pragma pack(1)
+#pragma pack(push,1)
 typedef struct 
 {
 	char languageCode[2];				// 2 bytes
@@ -75,7 +75,7 @@ TitleIndex::TitleIndex(string pathToDataFile)
 		// second try
 		_dataFileName = "";
 		
-		int length = pathToDataFile.length();
+		size_t length = pathToDataFile.length();
 		if ( length && pathToDataFile[length-1]=='/' )
 		{
 			if ( (length>=4) && pathToDataFile[length-4]=='/' )
@@ -96,7 +96,7 @@ TitleIndex::TitleIndex(string pathToDataFile)
 			{
 				ConfigFile *c=new ConfigFile(pathToDataFile+"/manifest");
 				string compressedFile=c->GetSetting("CompressedXML");
-				if(f = fopen((pathToDataFile+"/"+compressedFile).c_str(),"r"))
+				if((f = fopen((pathToDataFile+"/"+compressedFile).c_str(),"r")))
 				{
 					_dataFileName=compressedFile;
 					_pathToDataFile=pathToDataFile;
@@ -175,13 +175,13 @@ ArticleSearchResult* TitleIndex::FindArticle(string title, bool multiple)
 	if ( !f )
 		return NULL;
 
-	int indexNo = 0;
+	size_t indexNo = 0;
 	
 	string lowercaseTitle = CPPStringUtils::to_lower_utf8(title);
-	int foundAt = -1;
-	int lBound = 0;
-	int uBound = _numberOfArticles - 1;
-	int index = 0;	
+	long foundAt = -1;
+	size_t lBound = 0;
+	size_t uBound = _numberOfArticles - 1;
+	size_t index = 0;
 
 	while ( lBound<=uBound )
 	{	
@@ -212,7 +212,7 @@ ArticleSearchResult* TitleIndex::FindArticle(string title, bool multiple)
 	}
 	
 	// check if there are more than one articles with the same lowercase name
-	int startIndex = foundAt;
+	size_t startIndex = foundAt;
 	while ( startIndex>0 )
 	{
 		string titleAtIndex = GetTitle(f, startIndex-1, indexNo);
@@ -224,7 +224,7 @@ ArticleSearchResult* TitleIndex::FindArticle(string title, bool multiple)
 		startIndex--;
 	}
 
-	int endIndex = foundAt;
+	size_t endIndex = foundAt;
 	while ( endIndex<(_numberOfArticles-1) )
 	{
 		string titleAtIndex = GetTitle(f, endIndex+1, indexNo);
@@ -243,7 +243,7 @@ ArticleSearchResult* TitleIndex::FindArticle(string title, bool multiple)
 		if ( startIndex!=endIndex )
 		{
 			// check if one matches 100%
-			for(int i=startIndex; i<=endIndex; i++)
+			for(size_t i=startIndex; i<=endIndex; i++)
 			{		
 				string titleInArchive = GetTitle(f, i, indexNo);
 				if ( title==titleInArchive )
@@ -271,7 +271,7 @@ ArticleSearchResult* TitleIndex::FindArticle(string title, bool multiple)
 	else
 	{
 		ArticleSearchResult* result = NULL;
-		for(int i=startIndex; i<=endIndex; i++)
+		for(size_t i=startIndex; i<=endIndex; i++)
 		{
 			string titleInArchive = GetTitle(f, i, indexNo);
 			
@@ -322,7 +322,7 @@ string TitleIndex::PathToDataFile()
 {
 	return _pathToDataFile;
 }
-int TitleIndex::NumberOfArticles()
+size_t TitleIndex::NumberOfArticles()
 {
 	return _numberOfArticles;
 }
@@ -337,14 +337,14 @@ string TitleIndex::GetSuggestions(string phrase, int maxSuggestions)
 	if ( _useManifest )
 		return GetSuggestions2(phrase, maxSuggestions);
 
-	int indexNo = 1;
+	size_t indexNo = 1;
 	if ( !_indexPos_1 )
 		indexNo = 0;
 
 	
 	string lowercasePhrase = PrepareSearchPhrase(phrase);
 	
-	int phraseLength = lowercasePhrase.length();
+	size_t phraseLength = lowercasePhrase.length();
 	if ( phraseLength==0 )
 		return suggestions;
 	
@@ -352,10 +352,10 @@ string TitleIndex::GetSuggestions(string phrase, int maxSuggestions)
 	if ( !f )
 		return suggestions;
 		
-	int foundAt = -1;
-	int lBound = 0;
-	int uBound = _numberOfArticles - 1;
-	int index = 0;	
+	long foundAt = -1;
+	size_t lBound = 0;
+	size_t uBound = _numberOfArticles - 1;
+	size_t index = 0;
 	string titleAtIndex;
 	
 	while ( lBound<=uBound )
@@ -364,7 +364,7 @@ string TitleIndex::GetSuggestions(string phrase, int maxSuggestions)
 		
 		// get the title at the specific index
 		titleAtIndex = GetTitle(f, index, indexNo);
-		
+
 		titleAtIndex = PrepareSearchPhrase(titleAtIndex);
 		
 		if ( lowercasePhrase<titleAtIndex )
@@ -437,7 +437,7 @@ string TitleIndex::GetSuggestions(string phrase, int maxSuggestions)
 	}
 	
 	// go to the first article which starts with the phrase
-	int startIndex = foundAt;
+	size_t startIndex = foundAt;
 	while ( startIndex>0 )
 	{
 		string titleAtIndex = GetTitle(f, startIndex-1, indexNo);
@@ -571,6 +571,46 @@ string TitleIndex::GetTitle(FILE* f, int articleNumber, int indexNo)
 	return result;
 }
 
+string TitleIndex::GetTitle(FILE* f, size_t articleNumber, size_t indexNo)
+{
+	_lastBlockPos = 0;
+	_lastArticlePos = 0;
+	_lastArticleLength = 0;
+
+	if ( !f || articleNumber>=_numberOfArticles  )
+		return string();
+
+	fpos_t indexPos = _indexPos_0;
+	if ( indexNo==1 && _indexPos_1 )
+		indexPos = _indexPos_1;
+
+	int error = fseeko(f, indexPos + articleNumber*sizeof(int), SEEK_SET);
+	if ( error )
+		return string();
+
+	fpos_t titlePos = 0;
+	size_t read = fread(&titlePos, sizeof(int), 1, f);
+
+	if ( !read )
+		return string();
+
+	error = fseeko(f, _titlesPos + titlePos, SEEK_SET);
+	if ( error )
+		return string();
+
+	// store the article location and size for use in the future
+	fread(&_lastBlockPos, sizeof(_lastBlockPos), 1, f);
+	fread(&_lastArticlePos, sizeof(_lastArticlePos), 1, f);
+	fread(&_lastArticleLength, sizeof(_lastArticleLength), 1, f);
+
+	string result;
+	unsigned char c = 0;
+	while ( !feof(f) && (c=fgetc(f)) )
+		result += c;
+
+	return result;
+}
+
 string TitleIndex::PrepareSearchPhrase(string phrase)
 {
 	string lowercasePhrase = CPPStringUtils::to_lower_utf8(phrase);
@@ -659,10 +699,10 @@ ArticleSearchResult* TitleIndex::FindArticle2(string title, bool multiple)
 	int indexNo = 0;
 	
 	string lowercaseTitle = CPPStringUtils::to_lower_utf8(title);
-	int foundAt = -1;
-	int lBound = 0;
-	int uBound = _numberOfArticles - 1;
-	int index = 0;	
+	long foundAt = -1;
+	size_t lBound = 0;
+	size_t uBound = _numberOfArticles - 1;
+	size_t index = 0;
 
 	while ( lBound<=uBound )
 	{	
@@ -694,7 +734,7 @@ ArticleSearchResult* TitleIndex::FindArticle2(string title, bool multiple)
 	}
 	
 	// check if there are more than one articles with the same lowercase name
-	int startIndex = foundAt;
+	long startIndex = foundAt;
 	while ( startIndex>0 )
 	{
 		string titleAtIndex = GetTitle2(fpIdxRecord, fpIdxSort, startIndex-1, indexNo);
@@ -706,7 +746,7 @@ ArticleSearchResult* TitleIndex::FindArticle2(string title, bool multiple)
 		startIndex--;
 	}
 
-	int endIndex = foundAt;
+	long endIndex = foundAt;
 	while ( endIndex<(_numberOfArticles-1) )
 	{
 		string titleAtIndex = GetTitle2(fpIdxRecord, fpIdxSort, endIndex+1, indexNo);
@@ -725,7 +765,7 @@ ArticleSearchResult* TitleIndex::FindArticle2(string title, bool multiple)
 		if ( startIndex!=endIndex )
 		{
 			// check if one matches 100%
-			for(int i=startIndex; i<=endIndex; i++)
+			for(long i=startIndex; i<=endIndex; i++)
 			{		
 				string titleInArchive = GetTitle2(fpIdxRecord, fpIdxSort, i, indexNo);
 				if ( title==titleInArchive )
@@ -756,7 +796,7 @@ ArticleSearchResult* TitleIndex::FindArticle2(string title, bool multiple)
 	else
 	{
 		ArticleSearchResult* result = NULL;
-		for(int i=startIndex; i<=endIndex; i++)
+		for(long i=startIndex; i<=endIndex; i++)
 		{
 			string titleInArchive = GetTitle2(fpIdxRecord, fpIdxSort, i, indexNo);
 			
@@ -785,7 +825,7 @@ ArticleSearchResult* TitleIndex::FindArticle2(string title, bool multiple)
 	}
 }
 
-string TitleIndex::GetTitle2(FILE* fpIdxRecord, FILE* fpIdxSort, int articleNumber, int indexNo)
+string TitleIndex::GetTitle2(FILE* fpIdxRecord, FILE* fpIdxSort, long articleNumber, size_t indexNo)
 {
 	_lastBlockNumber = 0;
 	_lastBlockPos = 0;
@@ -813,7 +853,7 @@ string TitleIndex::GetTitle2(FILE* fpIdxRecord, FILE* fpIdxSort, int articleNumb
 	
 	// store the article location and size for use in the future
 	unsigned long int uli1=0;
-	unsigned int ui1=0,ui2=0,ui3=0;
+	unsigned int ui1=0,ui2=0;
 	fread(&uli1, sizeof(unsigned long int), 1, fpIdxRecord);
 	_lastBlockNumber+=uli1;
 	_lastBlockPos=(_lastBlockNumber)*sizeof(off_t)*2;
@@ -850,7 +890,7 @@ string TitleIndex::GetSuggestions2(string phrase, int maxSuggestions)
 	
 	string lowercasePhrase = PrepareSearchPhrase(phrase);
 	
-	int phraseLength = lowercasePhrase.length();
+	size_t phraseLength = lowercasePhrase.length();
 	if ( phraseLength==0 )
 		return suggestions;
 
@@ -876,10 +916,10 @@ string TitleIndex::GetSuggestions2(string phrase, int maxSuggestions)
 	//if ( !f )
 	//	return suggestions;
 		
-	int foundAt = -1;
-	int lBound = 0;
-	int uBound = _numberOfArticles - 1;
-	int index = 0;	
+	long foundAt = -1;
+	size_t lBound = 0;
+	size_t uBound = _numberOfArticles - 1;
+	size_t index = 0;
 	string titleAtIndex;
 	
 	while ( lBound<=uBound )
@@ -963,7 +1003,7 @@ string TitleIndex::GetSuggestions2(string phrase, int maxSuggestions)
 	}
 	
 	// go to the first article which starts with the phrase
-	int startIndex = foundAt;
+	long startIndex = foundAt;
 	while ( startIndex>0 )
 	{
 		string titleAtIndex = GetTitle2(fpIdxRecord, fpIdxSort, startIndex-1, indexNo);

@@ -20,9 +20,11 @@
  *  along with Wiki2Touch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <ctime>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <sys/types.h>
@@ -47,7 +49,7 @@
 int _sock = -1;
 char* _webContentDir;
 
-char *get_mime_type(char *name)
+const char *get_mime_type(char *name)
 {
 	char *ext = strrchr(name, '.');
 	if (!ext) return NULL;
@@ -70,7 +72,7 @@ char *get_mime_type(char *name)
 	return NULL;
 }
 
-void send_headers(FILE *f, int status, char *title, char *extra, char *mime, int length, time_t date=-1)
+void send_headers(FILE *f, int status, const char *title, const char *extra, const char *mime, size_t length, time_t date=-1)
 {
 	time_t now;
 	char timebuf[128];
@@ -82,7 +84,7 @@ void send_headers(FILE *f, int status, char *title, char *extra, char *mime, int
 	fprintf(f, "Date: %s\r\n", timebuf);
 	if (extra) fprintf(f, "%s\r\n", extra);
 	if (mime) fprintf(f, "Content-Type: %s\r\n", mime);
-	if (length >= 0) fprintf(f, "Content-Length: %d\r\n", length);
+	fprintf(f, "Content-Length: %zd\r\n", length);
 	if (date != -1)
 	{
 		strftime(timebuf, sizeof(timebuf), RFC1123FMT, gmtime(&date));
@@ -93,7 +95,7 @@ void send_headers(FILE *f, int status, char *title, char *extra, char *mime, int
 	fprintf(f, "\r\n");
 }
 
-void send_error(FILE *f, int status, char *title, char *extra, char *text)
+void send_error(FILE *f, int status, const char *title, const char *extra, const char *text)
 {
 	send_headers(f, status, title, extra, "text/html", -1, -1);
 	fprintf(f, "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);
@@ -121,17 +123,17 @@ void redirect_to(FILE *f, const char* target)
 void send_file(FILE *f, char *path, struct stat *statbuf)
 {
 	char data[4096];
-	int n;
+	size_t n;
 	
 	FILE *file = fopen(path, "r");
 	if (!file)
 		send_error(f, 403, "Forbidden", NULL, "Access denied.");
 	else
 	{
-		int length = S_ISREG(statbuf->st_mode) ? statbuf->st_size : -1;
+		size_t length = S_ISREG(statbuf->st_mode) ? statbuf->st_size : -1;
 		send_headers(f, 200, "OK", NULL, get_mime_type(path), length, statbuf->st_mtime);
 		
-		while ((n = fread(data, 1, sizeof(data), file)) > 0) 
+		while ((n = fread(data, 1, sizeof(data), file)) > 0)
 			if ( fwrite(data, 1, n, f)!=n )
 				break;
 		
@@ -225,7 +227,7 @@ void send_raw(FILE *f, char* name)
 		{
 			wstring searchResults = wikiArticle->RawSearchResults(articleSearchResult);
 			string data = CPPStringUtils::to_utf8(searchResults);
-			int length = data.length();
+			size_t length = data.length();
 			send_headers(f, 200, "OK", NULL, "text/plain; charset=utf-8", length, -1);		
 			fwrite(data.c_str(), 1, length, f);
 		}
@@ -238,7 +240,7 @@ void send_raw(FILE *f, char* name)
 			{
 				string data = CPPStringUtils::to_utf8(article);
 			
-				int length = data.length();
+				size_t length = data.length();
 				send_headers(f, 200, "OK", NULL, "text/plain; charset=utf-8", length, -1);
 
 				fwrite(data.c_str(), 1, length, f);
@@ -346,8 +348,7 @@ void send_article(FILE *f, char* name)
 			int error = fseek(file, 0, SEEK_END);
 			fpos_t length;
 			
-			if ( !error )
-				error = fgetpos(file, &length);
+			error = fgetpos(file, &length);
 			
 			if ( !error )
 				error = fseek(file, 0, SEEK_SET);
@@ -393,7 +394,7 @@ void send_article(FILE *f, char* name)
 			{
 				wstring searchResults = wikiArticle->FormatSearchResults(articleSearchResult);
 				string data = CPPStringUtils::to_utf8(searchResults);
-				int length = data.length();
+				size_t length = data.length();
 				send_headers(f, 200, "OK", NULL, "text/html; charset=utf-8", length, -1);		
 				fwrite(data.c_str(), 1, length, f);
 			}
@@ -406,7 +407,7 @@ void send_article(FILE *f, char* name)
 				{
 					string data = CPPStringUtils::to_utf8(article);
 				
-					int length = data.length();
+					size_t length = data.length();
 					send_headers(f, 200, "OK", NULL, "text/html; charset=utf-8", length, -1);
 
 					fwrite(data.c_str(), 1, length, f);
@@ -436,7 +437,7 @@ int process(FILE *f)
 	char *protocol;
 	struct stat statbuf;
 	char pathbuf[4096];
-	int len;
+	size_t len;
 	char path[4096];
 	
 	if (!fgets(buf, sizeof(buf), f)) return -1;
@@ -453,7 +454,8 @@ int process(FILE *f)
 	strcat(path, relativ_path);
 	
 	fseek(f, 0, SEEK_CUR); // Force change of stream direction
-#if DEBUG
+//#if DEBUG
+#if 0
 	if (strcasecmp(method, "POST") == 0)
 	{
 		char field[512];
@@ -503,7 +505,7 @@ int process(FILE *f)
 			parser.SetInput(CPPStringUtils::to_wstring(string(post_buf)).c_str());
 			parser.Parse();
 			string result = CPPStringUtils::to_utf8(parser.GetOutput());
-			int length = result.length();
+			size_t length = result.length();
 			send_headers(f, 200, "OK", NULL, "text/html; charset=utf-8", length, -1);
 			fwrite(result.c_str(), 1, length, f);
 		}
@@ -539,7 +541,7 @@ int process(FILE *f)
 
 			// the index/data for the "local" file 
 			ImageIndex* imageIndex = settings.GetImageIndex(languageCode);
-			int length = 0;
+			size_t length = 0;
 			unsigned char* imageData = imageIndex->GetImage(filename, &length);
 			if ( !imageData || !length )
 			{
@@ -588,7 +590,7 @@ int process(FILE *f)
 			string filename = CPPStringUtils::url_decode(url);
                         
                         MathIndex* mathIndex = settings.GetMathIndex(languageCode);
-                        int length = 0;
+                        size_t length = 0;
                         unsigned char* imageData = mathIndex->GetImage(filename, &length);
                         if ( !imageData || !length )
                         {
@@ -693,7 +695,7 @@ int process(FILE *f)
 			
 			string phrase = CPPStringUtils::url_decode(url);
 			string suggestions = titleIndex->GetSuggestions(phrase, 25);
-			int length = suggestions.length();
+			size_t length = suggestions.length();
 			
 			send_headers(f, 200, "OK", NULL, "text/html; charset=utf-8", length, -1);
 			fwrite(suggestions.c_str(), 1, length, f);
@@ -849,7 +851,7 @@ int process(FILE *f)
 						if (S_ISDIR(statbuf.st_mode))
 							fprintf(f, "%s\r\n", timebuf);
 						else
-							fprintf(f, "%s %10d\r\n", timebuf, statbuf.st_size);
+							fprintf(f, "%s %10lld\r\n", timebuf, statbuf.st_size);
 					}
 					closedir(dir);
 					

@@ -22,8 +22,11 @@
 
 #include "CPPStringUtils.h"
 
+using namespace std;
+
 inline char    _to_lower(const char c)     {if (((unsigned char)c)<0x80) return tolower(c); else if (((unsigned char)c)>=0xc0 && ((unsigned char) c)<0xdf) return (unsigned char)c+0x20; else return c;};
 inline wchar_t _to_wlower(const wchar_t c) {if (c<0x80) return towlower(c); else if (c>=0xc0 && c<0xdf) return c+0x20; else return c;};
+
 
 std::string CPPStringUtils::to_string(const std::wstring source)
 {
@@ -36,7 +39,7 @@ std::string CPPStringUtils::to_string(const std::wstring source)
 
 std::wstring CPPStringUtils::to_wstring(const std::string source)
 {
-	wstring dest = wstring();
+    wstring dest = wstring();
 	for (int i=0; i<source.length(); i++)
 		dest += (unsigned char) source[i];
 	
@@ -45,7 +48,7 @@ std::wstring CPPStringUtils::to_wstring(const std::string source)
 
 std::string CPPStringUtils::to_string(int source)
 {
-	string dest = string();
+    string dest = string();
 	bool negativ = (source<0);
 	
 	if ( source==0 )
@@ -68,7 +71,7 @@ std::string CPPStringUtils::to_string(int source)
 
 std::wstring CPPStringUtils::to_wstring(int source)
 {
-	wstring dest = wstring();
+    wstring dest = wstring();
 	bool negativ = (source<0);
 	
 	if ( source==0 )
@@ -94,7 +97,7 @@ std::string CPPStringUtils::to_utf8(const std::string source)
 {
 	// as the string itself only holds bytes it's not necessary to encode to more than two bytes 
 	string dest = string();
-	int length = source.length();
+	size_t length = source.length();
 
 	for(int i=0; i<length; i++)
 	{
@@ -113,7 +116,7 @@ std::string CPPStringUtils::to_utf8(const std::string source)
 std::string CPPStringUtils::to_utf8(const std::wstring source)
 {
 	string dest = string();
-	int length = source.length();
+	size_t length = source.length();
 
 	for(int i=0; i<length; i++)
 	{
@@ -145,9 +148,9 @@ std::string CPPStringUtils::to_utf8(const std::wstring source)
 std::string CPPStringUtils::from_utf8(const std::string source)
 {
 	string dest = string();
-	int length = source.length();
+	size_t length = source.length();
 	
-	for(int i=0; i<length; i++)
+	for(size_t i=0; i<length; i++)
 	{
 		unsigned char c1 = (unsigned char) source[i];
 		if ( c1 < 0x80 ) {
@@ -198,9 +201,9 @@ std::string CPPStringUtils::from_utf8(const std::string source)
 std::wstring CPPStringUtils::from_utf8w(const std::string source)
 {
 	wstring dest = wstring();
-	int length = source.length();
+	size_t length = source.length();
 	
-	for(int i=0; i<length; i++)
+	for(size_t i=0; i<length; i++)
 	{
 		unsigned int c1 = (unsigned char) source[i];
 		if ( c1<0x80 ) {
@@ -290,14 +293,14 @@ std::string CPPStringUtils::trim(std::string src)
 		return src;
 	
 	int start = 0;
-	int length = src.length();
+	size_t length = src.length();
 	while (start<length && src[start]<=0x20)
 		start++;
 	
 	if ( start==length )
 		return string();
 	
-	int end = length-1;
+	size_t end = length-1;
 	while (end>0 && src[end]<=0x20 )
 		end--;
 	
@@ -310,14 +313,14 @@ std::wstring CPPStringUtils::trim(std::wstring src)
 		return src;
 	
 	int start = 0;
-	int length = src.length();
+	size_t length = src.length();
 	while (start<length && src[start]<=0x20)
 		start++;
 	
 	if ( start==length )
 		return wstring();
 	
-	int end = length-1;
+	size_t end = length-1;
 	while (end>0 && src[end]<=0x20 )
 		end--;
 	
@@ -331,7 +334,7 @@ std::string CPPStringUtils::url_encode(std::string src)
 	
 	string dst = string();
 	int i=0;
-	int length = src.length();
+	size_t length = src.length();
 	while ( i<length )
 	{
 		unsigned char c = src[i];
@@ -366,7 +369,7 @@ std::wstring CPPStringUtils::url_encode(std::wstring src)
 	
 	wstring dst = wstring();
 	int i = 0;
-	int length = src.length();
+	size_t length = src.length();
 	while ( i<length )
 	{
 		unsigned int c = src[i];
@@ -402,7 +405,7 @@ std::string CPPStringUtils::url_decode(std::string src)
 	string dst = string();
 	
 	int i = 0;
-	int length = src.length();
+	size_t length = src.length();
 	while ( i<length )
 	{
 		unsigned int c = src[i++];
@@ -458,7 +461,7 @@ std::string CPPStringUtils::exchange_diacritic_chars_utf8(string src)
 	string dst = string();
 	
 	int i = 0;
-	int length = src.length();
+	size_t length = src.length();
 	while ( i<length )
 	{
 		unsigned int c = src[i++];
@@ -501,7 +504,7 @@ std::string CPPStringUtils::tc2sc_utf8(string src)
 	string dst = string();
 	
 	int i = 0;
-	int length = src.length();
+	size_t length = src.length();
 	while ( i<length )
 	{
 		unsigned char c = src[i++];
@@ -564,7 +567,7 @@ std::wstring CPPStringUtils::js_format(std::wstring src)
 	
 	wstring dst = wstring();
 	int i = 0;
-	int length = src.length();
+	size_t length = src.length();
 	while ( i<length )
 	{
 		unsigned int c = src[i];

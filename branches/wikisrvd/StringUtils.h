@@ -24,6 +24,7 @@
 #define STRINGUTILS_H
 
 #include <wchar.h>
+//#include <cwchar>
 
 extern const wchar_t* dayName[];
 extern const wchar_t* monNameAbbr[];
@@ -43,7 +44,7 @@ void to_upper(wchar_t* src);
 
 bool isintalpha(wchar_t c);
 wchar_t* wstrdup(const wchar_t* src);
-wchar_t* wstrndup(const wchar_t* src, int count);
+wchar_t* wstrndup(const wchar_t* src, size_t count);
 int watoi(const wchar_t* src);
 
 bool startsWith(const wchar_t* src, const wchar_t* prefix);
@@ -54,6 +55,6 @@ char* LoadFile(const char* filename);
 wchar_t** split(const wchar_t* src, wchar_t splitChar);
 void free_split_result(wchar_t** data);
 
-#endif STRINGUTILS_H
+#endif //STRINGUTILS_H
 
 

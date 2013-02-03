@@ -34,7 +34,7 @@ public:
 	~ImageIndex();
 	
 	int NumberOfImages();
-	unsigned char* GetImage(string filename, int* size);
+	unsigned char* GetImage(string filename, size_t* size);
 	
 private:
 	string	_dataFileName;

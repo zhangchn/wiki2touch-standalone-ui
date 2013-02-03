@@ -60,7 +60,7 @@ public:
 	void DeleteSearchResult(ArticleSearchResult* articleSearchResult);
 	string DataFileName();
 	string PathToDataFile();
-	int NumberOfArticles();
+	size_t NumberOfArticles();
 	bool UseManifest();
 	
 	string GetSuggestions(string phrase, int maxSuggestions);
@@ -74,7 +74,7 @@ public:
 private:
 	string  _dataFileName;
 	string	_pathToDataFile;
-	int	_numberOfArticles;
+	size_t	_numberOfArticles;
 	int	_numberOfBlocks;
 	bool	isChinese;
 	
@@ -83,7 +83,8 @@ private:
 	fpos_t	_indexPos_1;
 		
 	string GetTitle(FILE* f, int articleNumber, int indexNo);
-	string GetTitle2(FILE* fpIdxRecord, FILE* fpIdxSort, int articleNumber, int indexNo);
+    string GetTitle(FILE* f, size_t articleNumber, size_t indexNo);
+	string GetTitle2(FILE* fpIdxRecord, FILE* fpIdxSort, long articleNumber, size_t indexNo);
 	string PrepareSearchPhrase(string phrase);
 	
 	fpos_t	_lastBlockPos;
