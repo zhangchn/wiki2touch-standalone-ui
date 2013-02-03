@@ -35,7 +35,15 @@
 #include "ConfigFile.h"
 
 //#ifdef MATH_SUPPORT
-#include <CommonCrypto/CommonDigest.h>
+#if defined(__APPLE__)
+    #include <CommonCrypto/CommonDigest.h>
+    typedef const void *md5_data_ptr_t;
+#else
+    #include <openssl/md5.h>
+    typedef const unsigned char *md5_data_ptr_t;
+    typedef size_t CC_LONG;
+    #define CC_MD5 MD5;
+#endif
 //#endif
 
 #define OUTPUT_GROWS	8192
@@ -4186,7 +4194,7 @@ void WikiMarkupParser::Parse()
 									
 									length = (CC_LONG)mathutf8.size();
 									unsigned char *md5 =(unsigned char*) malloc(18*(sizeof(unsigned char)));
-									CC_MD5((void*)(mathutf8.data()),length,md5);
+									CC_MD5((md5_data_ptr_t)(mathutf8.data()),length,md5);
 									wstring formatted_math= CPPStringUtils::js_format(wstring(alt));
 									wchar_t *md5wstr=(wchar_t *)malloc(64*sizeof(wchar_t));
 									wchar_t *md5imgtags=(wchar_t *)malloc((160+formatted_math.size())*sizeof(wchar_t));
