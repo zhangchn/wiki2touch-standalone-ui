@@ -291,7 +291,7 @@ char* LoadFile(const char* filename)
 		return NULL;
 	
 	int error = fseek(f, 0, SEEK_END);
-	fpos_t size;
+	off_t size;
 			  
 	if ( !error )
 		error = fgetpos(f, &size);

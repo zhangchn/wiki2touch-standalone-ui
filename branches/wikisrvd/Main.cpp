@@ -346,7 +346,7 @@ void send_article(FILE *f, char* name)
 		else
 		{			
 			int error = fseek(file, 0, SEEK_END);
-			fpos_t length;
+			off_t length;
 			
 			error = fgetpos(file, &length);
 			

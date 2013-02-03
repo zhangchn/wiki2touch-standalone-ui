@@ -76,8 +76,8 @@ wstring WikiMarkupGetter::GetMarkupForArticle(ArticleSearchResult* articleSearch
 	if(titleIndex->UseManifest())
 		return GetMarkupForArticle2(articleSearchResult, titleIndex);
 	
-	fpos_t blockPos = articleSearchResult->BlockPos(); 
-	fpos_t articlePos = articleSearchResult->ArticlePos();
+	off_t blockPos = articleSearchResult->BlockPos(); 
+	off_t articlePos = articleSearchResult->ArticlePos();
 	int articleLength = articleSearchResult->ArticleLength();
 	
 	_lastArticleTitle = string(articleSearchResult->TitleInArchive());
@@ -140,8 +140,8 @@ wstring WikiMarkupGetter::GetMarkupForArticle(ArticleSearchResult* articleSearch
 }
 wstring WikiMarkupGetter::GetMarkupForArticle2(ArticleSearchResult* articleSearchResult, TitleIndex *titleIndex)
 {
-	fpos_t blockPos = articleSearchResult->BlockPos(); 
-	fpos_t articlePos = articleSearchResult->ArticlePos();
+	off_t blockPos = articleSearchResult->BlockPos(); 
+	off_t articlePos = articleSearchResult->ArticlePos();
 	int articleLength = articleSearchResult->ArticleLength();
 	
 	_lastArticleTitle = string(articleSearchResult->TitleInArchive());
@@ -156,7 +156,7 @@ wstring WikiMarkupGetter::GetMarkupForArticle2(ArticleSearchResult* articleSearc
 	if(!f)
 		return wstring();
 	fseeko(fpBlkOffset, blockPos, SEEK_SET);
-	fpos_t bBegin, bEnd;
+	off_t bBegin, bEnd;
 	fread(&bBegin, sizeof(off_t), 1, fpBlkOffset);
 	fseeko(fpBlkOffset, blockPos+sizeof(off_t), SEEK_SET);
 	fread(&bEnd, sizeof(off_t), 1,fpBlkOffset);
@@ -180,9 +180,9 @@ wstring WikiMarkupGetter::GetMarkupForArticle2(ArticleSearchResult* articleSearc
 			content = CPPStringUtils::from_utf8w(pDecomp);
 			
 			fseeko(fpBlkOffset, blockPos+sizeof(off_t)*2, SEEK_SET);
-			fread(&bBegin,sizeof(fpos_t),1,fpBlkOffset);
+			fread(&bBegin,sizeof(off_t),1,fpBlkOffset);
 			fseeko(fpBlkOffset, blockPos+sizeof(off_t)*3, SEEK_SET);
-			fread(&bEnd, sizeof(fpos_t),1,fpBlkOffset);
+			fread(&bEnd, sizeof(off_t),1,fpBlkOffset);
 			free(decompBuff);
 			decompBuff=DecompressBlockWithBits(bBegin,bEnd,f,&dSize);
 			if(decompBuff==NULL)
@@ -211,7 +211,7 @@ wstring WikiMarkupGetter::GetMarkupForArticle2(ArticleSearchResult* articleSearc
 	return content;
 	
 }
-int WikiMarkupGetter::miniFilter(char *pDecomp, fpos_t len_max)
+int WikiMarkupGetter::miniFilter(char *pDecomp, off_t len_max)
 {
 		int len=0;
 		char *pFinal=pDecomp;
@@ -421,7 +421,7 @@ wstring WikiMarkupGetter::GetTemplate(const string utf8TemplateName, string temp
 		if ( f ) 
 		{
 			int error = fseek(f, 0, SEEK_END);
-			fpos_t size;
+			off_t size;
 			
 			if ( !error )
 				error = fgetpos(f, &size);
