@@ -20,6 +20,7 @@
  *  along with Wiki2Touch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdlib>
 #include "WikiArticle.h"
 #include "WikiMarkupGetter.h"
 #include "WikiMarkupParser.h"

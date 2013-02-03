@@ -49,13 +49,13 @@ private:
 	/* input buffer handling */
 	wchar_t*		_pInput;
 	wchar_t*		_pCurrentInput;
-	int				_inputLength;
+	size_t			_inputLength;
 
 	/* output buffer handling */
 	wchar_t*		_pOutput;
 	wchar_t*		_pCurrentOutput;
-	int				_iOutputSize;
-	int				_iOutputRemain;
+	size_t			_iOutputSize;
+	size_t			_iOutputRemain;
 	
 	/* should templates be expanded, usually this is only necessary for the first start	*/
 	bool _doExpandTemplates;
@@ -84,7 +84,7 @@ private:
 	bool _stop;
 	
 	/* table of contents position */
-	int _tocPosition;
+	long _tocPosition;
 	
 	/* do we have a toc */
 	bool _noToc;
@@ -111,7 +111,7 @@ private:
 	
 	double EvaluateExpression(const wchar_t* expression);
 	
-	void ReplaceInput(const wchar_t* text, int position, int length);
+	void ReplaceInput(const wchar_t* text, long position, long length);
 	
 	wchar_t GetNextChar();
 	wchar_t Peek();
@@ -134,9 +134,9 @@ private:
 	
 	bool GetPixelUnit(wchar_t* src, int* width, int* height);
 	
-	void PushTag(wchar_t* name, bool output=true);
-	void PopTag(wchar_t* name, bool output=true);
-	bool TopTagIs(wchar_t* name);
+	void PushTag(const wchar_t* name, bool output=true);
+	void PopTag(const wchar_t* name, bool output=true);
+	bool TopTagIs(const wchar_t* name);
 	
 	void Append(wchar_t c);
 	void Append(const wchar_t* msg);
@@ -160,7 +160,7 @@ private:
 	wstring AbbrMonthName(int monthNo);
 	wstring MonthName(int monthNo);
 	
-	int IsWikiTag(wchar_t* tagName);
+	int IsWikiTag(const wchar_t* tagName);
 	
 	wstring randomTag();
 	wstring strip(wstring src, map<wstring,wstring> *stripMap);
@@ -170,4 +170,4 @@ private:
 	void SetRecursionCount(int count);
 };
 
-#endif WIKIMARKUPPARSER_H
+#endif //WIKIMARKUPPARSER_H

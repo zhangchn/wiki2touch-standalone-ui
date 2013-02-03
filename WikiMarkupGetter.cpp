@@ -21,9 +21,10 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <memory.h>
 #include <wchar.h>
+//#include <cwchar>
 #include <bzlib.h>
 #include <sys/stat.h>
 
@@ -76,7 +77,7 @@ wstring WikiMarkupGetter::GetMarkupForArticle(ArticleSearchResult* articleSearch
 		return GetMarkupForArticle2(articleSearchResult, titleIndex);
 	
 	fpos_t blockPos = articleSearchResult->BlockPos(); 
-	int articlePos = articleSearchResult->ArticlePos();
+	fpos_t articlePos = articleSearchResult->ArticlePos();
 	int articleLength = articleSearchResult->ArticleLength();
 	
 	_lastArticleTitle = string(articleSearchResult->TitleInArchive());
@@ -101,7 +102,7 @@ wstring WikiMarkupGetter::GetMarkupForArticle(ArticleSearchResult* articleSearch
 		if ( articlePos-read<0 )
 		{
 			char* start = buffer + articlePos;
-			int len = (read-articlePos);
+			size_t len = (read-articlePos);
 			if ( len>articleLength )
 				len = articleLength;
 			
@@ -140,7 +141,7 @@ wstring WikiMarkupGetter::GetMarkupForArticle(ArticleSearchResult* articleSearch
 wstring WikiMarkupGetter::GetMarkupForArticle2(ArticleSearchResult* articleSearchResult, TitleIndex *titleIndex)
 {
 	fpos_t blockPos = articleSearchResult->BlockPos(); 
-	int articlePos = articleSearchResult->ArticlePos();
+	fpos_t articlePos = articleSearchResult->ArticlePos();
 	int articleLength = articleSearchResult->ArticleLength();
 	
 	_lastArticleTitle = string(articleSearchResult->TitleInArchive());
@@ -171,7 +172,7 @@ wstring WikiMarkupGetter::GetMarkupForArticle2(ArticleSearchResult* articleSearc
 	}
 	else
 	{
-		int len1,len2;
+		int len1;
 		char *pDecomp=decompBuff+articlePos;
 		if(articlePos+articleLength>dSize)
 		{
@@ -210,7 +211,7 @@ wstring WikiMarkupGetter::GetMarkupForArticle2(ArticleSearchResult* articleSearc
 	return content;
 	
 }
-int WikiMarkupGetter::miniFilter(char *pDecomp, int len_max)
+int WikiMarkupGetter::miniFilter(char *pDecomp, fpos_t len_max)
 {
 		int len=0;
 		char *pFinal=pDecomp;
@@ -323,7 +324,7 @@ char *WikiMarkupGetter::DecompressBlockWithBits(off_t bBegin, off_t bEnd, FILE *
 		a=*pBuff;
 		*pBuff=(a & (0xff<<(8-remainderBits)));
 	}
-	char endseq[10]={0x17,0x72,0x45,0x38,0x50,0x90,0x0,0x0,0x0,0x0};
+	uint8_t endseq[10]={0x17,0x72,0x45,0x38,0x50,0x90,0x0,0x0,0x0,0x0};
 	endseq[6]=buff[10];
 	endseq[7]=buff[11];
 	endseq[8]=buff[12];
@@ -354,7 +355,7 @@ char *WikiMarkupGetter::DecompressBlockWithBits(off_t bBegin, off_t bEnd, FILE *
 	fclose(t);
 	char *decompBuff=(char *)malloc(1000000);
 	unsigned int dSize=999999;
-	int sSize=pBuff-buff+1;
+	int sSize=(int)(pBuff-buff+1);
 	int r=BZ2_bzBuffToBuffDecompress(decompBuff,
                                                 &dSize,
                                                 buff,
@@ -428,7 +429,7 @@ wstring WikiMarkupGetter::GetTemplate(const string utf8TemplateName, string temp
 			if ( !error )
 				error = fseek(f, 0, SEEK_SET);
 			
-			int read = 0;
+			size_t read = 0;
 			char* buffer = NULL;
 			
 			if ( !error && size>0 ) {
@@ -531,7 +532,7 @@ wstring WikiMarkupGetter::GetTemplate(const string utf8TemplateName, string temp
 			// int comment = 0;
 			
 			int state = 0;
-			int length = wikiTemplate.length();
+			size_t length = wikiTemplate.length();
 			
 			for (int i=0; i<length; i++)
 			{

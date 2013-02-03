@@ -91,5 +91,5 @@ private:
 
 extern Settings settings;
 
-#endif SETTINGS_H
+#endif //SETTINGS_H
 	

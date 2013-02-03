@@ -21,6 +21,7 @@
  */
 
 #include "Settings.h"
+#include <cstdlib>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -162,7 +163,7 @@ bool Settings::Init(int argc, char *argv[])
 		i++;
 	}
 
-/*	const char* pfx = getenv("HOME");
+	const char* pfx = getenv("HOME");
 	if ( pfx ) 
 		_home = pfx;
 	else
@@ -170,15 +171,16 @@ bool Settings::Init(int argc, char *argv[])
 		_home = "/var/mobile/";
 	if ( !_home.length() || _home[_home.length()-1]!='/' )
 		_home += "/";
-*/	
+
+
 	if ( _path.empty() )
 		_path = string("~/Media/Wikipedia");
 
 	if ( _path.find("~")==0 ) 
 	{
 		if ( _path.length()>1 && _path[1]=='/' )
-			//_path = _home + _path.substr(2);
-			_path = "/var/mobile/" + _path.substr(2);
+            _path = _home + _path.substr(2);
+//			_path = "/var/mobile/" + _path.substr(2);
 		else
 			_path = _home + _path.substr(1);
 	}
@@ -193,8 +195,8 @@ bool Settings::Init(int argc, char *argv[])
 	
 	// store the application path
 	_basePath = argv[0];
-	int pos = _basePath.find_last_of('/');
-	if ( pos>=0 )
+	size_t pos = _basePath.find_last_of('/');
+	if ( pos!=string::npos )
 		_basePath = _basePath.substr(0, pos+1);
 	
 	// set the path for the web content folder
@@ -212,7 +214,7 @@ bool Settings::Init(int argc, char *argv[])
 	if ( dir )
 	{
 		struct dirent* dirbuf;
-		while ( dirbuf=readdir(dir) )
+		while ( (dirbuf=readdir(dir)) )
 		{
 			if ( ((dirbuf->d_type==DT_DIR) || (dirbuf->d_type==DT_LNK)) && (dirbuf->d_namlen>=2) && dirbuf->d_name[0]!='.' )
 			{

@@ -22,7 +22,7 @@
  *  along with Wiki2Touch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
+#include <cstdlib>
 #include "StringUtils.h"
 
 const wchar_t* dayName[] = {L"Sunday", L"Monday", L"Tuesday", L"Wednesday", L"Thursday", L"Friday", L"Saturday", 0x0};
@@ -206,7 +206,7 @@ wchar_t* wstrdup(const wchar_t* src)
 	if ( !src )
 		return NULL;
 	
-	int length = wcslen(src);
+	size_t length = wcslen(src);
 	wchar_t* dst = (wchar_t*) malloc((length+1) * sizeof(wchar_t));
 	if ( length )
 		wcscpy(dst, src);
@@ -216,7 +216,7 @@ wchar_t* wstrdup(const wchar_t* src)
 	return dst;
 }
 
-wchar_t* wstrndup(const wchar_t* src, int count)
+wchar_t* wstrndup(const wchar_t* src, size_t count)
 {
 	if ( !src )
 		return NULL;
@@ -299,7 +299,7 @@ char* LoadFile(const char* filename)
 	if ( !error )
 		error = fseek(f, 0, SEEK_SET);
 			  
-	int read = 0;
+	size_t read = 0;
 	char* buffer = NULL;
 			  
 	if ( !error && size>0 ) 

@@ -47,6 +47,6 @@ private:
 	string _languageCode;	
 	string _lastArticleTitle;
 	char *DecompressBlockWithBits(off_t bBegin, off_t bEnd, FILE *f, int *pdSize);
-	int miniFilter(char *pDecomp, int len_max);
+	int miniFilter(char *pDecomp, fpos_t len_max);
 };
 

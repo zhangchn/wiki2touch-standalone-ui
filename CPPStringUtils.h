@@ -20,10 +20,10 @@
  *  along with Wiki2Touch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using namespace std;
 
 #include <string>
-#include <wctype.h>
+//#include <wctype.h>
+//#include <cwchar>
 
 class CPPStringUtils {
 public:
@@ -50,8 +50,8 @@ public:
 	
 	static std::string url_decode(std::string src);
 	
-	static std::string exchange_diacritic_chars_utf8(string src);
-	static std::string tc2sc_utf8(string src);
+	static std::string exchange_diacritic_chars_utf8(std::string src);
+	static std::string tc2sc_utf8(std::string src);
 	static std::wstring js_format(std::wstring src);
 
 };

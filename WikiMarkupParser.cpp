@@ -20,9 +20,9 @@
  *  along with Wiki2Touch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <memory.h>
 #include <map>
 
@@ -40,7 +40,7 @@
 
 #define OUTPUT_GROWS	8192
 
-#define DEBUG false
+//#define DEBUG false
 #define RECURSION_LIMIT 64
 
 const wchar_t* wikiTags[] = {L"unused", L"nowiki", L"pre", L"source", L"imagemap", L"code", L"ref", L"references", L"math", 0x0};
@@ -67,9 +67,9 @@ typedef struct tagTOC
 
 typedef struct tagREF
 {
-	const	wchar_t* start;
-	int		length;
-	tagREF*	next;
+	const wchar_t*  start;
+	size_t          length;
+	tagREF*         next;
 } REF;
 
 WikiMarkupParser::WikiMarkupParser(const wchar_t* languageCode, const wchar_t* pageName, bool doExpandTemplates) 
@@ -281,7 +281,7 @@ double WikiMarkupParser::EvaluateExpression(const wchar_t* expression)
 	 */
 }
 
-void WikiMarkupParser::ReplaceInput(const wchar_t* text, int position, int length) 
+void WikiMarkupParser::ReplaceInput(const wchar_t* text, long position, long length)
 {	
 	if ( position<0 || length<0 )
 		return;
@@ -289,11 +289,11 @@ void WikiMarkupParser::ReplaceInput(const wchar_t* text, int position, int lengt
 	if ( position>_inputLength || (position+length)>_inputLength )
 		return;
 	
-	int text_length = 0;
+	size_t text_length = 0;
 	if ( text )
 		text_length = wcslen(text);
 	
-	int new_length = _inputLength - length + text_length;
+	size_t new_length = _inputLength - length + text_length;
 	
 	wchar_t* new_input = (wchar_t*) malloc((new_length+1) * sizeof(wchar_t));
 	wcsncpy(new_input, _pInput, position);
@@ -346,7 +346,7 @@ wchar_t* WikiMarkupParser::RemoveComments(const wchar_t* src)
 	if ( !src )
 		return NULL;
 	
-	int srcLength = wcslen(src);
+	size_t srcLength = wcslen(src);
 	const wchar_t* srcCurrent = src;
 	
 	wchar_t* dst = (wchar_t*) malloc((srcLength+1)*sizeof(wchar_t));
@@ -426,8 +426,8 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 	wchar_t *src1;
 	map<wstring, wstring> stripMap;
 	wstring strippedSrc=strip(wstring(src),&stripMap);
-	int strippedLen=strippedSrc.length();
-	int srcLength;
+	size_t strippedLen=strippedSrc.length();
+	size_t srcLength;
 	const wchar_t* srcCurrent;
 	const wchar_t * srcPos;
 	if(stripMap.size()>0 || wcslen(src)<strippedLen)
@@ -453,7 +453,7 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 	}
 
 	int dstSize = 0;
-	int dstLength = srcLength;
+	size_t dstLength = srcLength;
 	wchar_t* dst = (wchar_t*) malloc((dstLength+1)*sizeof(wchar_t));
 	wchar_t* dstPos = dst;
 	*dstPos = 0x0;
@@ -572,10 +572,10 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 			if ( *srcCurrent=='{' )
 			{
 				// add everything we have to far
-				int size = (srcCurrent-srcPos - 1); 
+				size_t size = (srcCurrent-srcPos - 1);
 				if ( size>0 )
 				{
-					int newDstSize = dstSize + size;
+					size_t newDstSize = dstSize + size;
 					if ( newDstSize>dstLength )
 					{
 						if(stripFlag)
@@ -626,7 +626,7 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 				
 				if ( settings.ExpandTemplates() )
 				{
-					int templateLength = srcCurrent - srcPos - 2; // the two trailing } are ignored
+					size_t templateLength = srcCurrent - srcPos - 2; // the two trailing } are ignored
 					
 					wchar_t* templateText = (wchar_t*) malloc((templateLength+1)*sizeof(wchar_t));
 					if ( templateLength>0 )
@@ -634,20 +634,19 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 					templateText[templateLength] = 0x0;
 					
 					srcPos = srcCurrent;
-			
-					if ( DEBUG )
-						wprintf(L"\r\nTemplate:\r\n%S\r\n", templateText);
-									
+
+//						wprintf(L"\r\nTemplate:\r\n%S\r\n", templateText);
+
 					// do something with the template here
 					if ( templateLength )
 					{
 						wchar_t* expandedTemplate = ExpandTemplate(templateText);
 						if ( expandedTemplate )
 						{
-							if ( DEBUG )
-								wprintf(L"\r\nExpanded Template:\r\n%S\r\n", expandedTemplate);
+
+//								wprintf(L"\r\nExpanded Template:\r\n%S\r\n", expandedTemplate);
 							trim_left_multiline(expandedTemplate);
-							int size = wcslen(expandedTemplate); 
+							size_t size = wcslen(expandedTemplate);
 							if ( size>4 )
 							{
 								wchar_t* help = ExpandTemplates(expandedTemplate);
@@ -664,11 +663,10 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 							}
 													
 							if ( size>0 )
-							{									
-								if ( DEBUG )
-									wprintf(L"\r\nExpanded Template:\r\n%S\r\n", expandedTemplate);
-								
-								int newDstSize = dstSize + size;
+							{
+//									wprintf(L"\r\nExpanded Template:\r\n%S\r\n", expandedTemplate);
+
+								size_t newDstSize = dstSize + size;
 								if ( newDstSize>dstLength )
 								{
 									// add the current template size, the remaining bytes and 256
@@ -709,12 +707,12 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 	if ( handledOne )
 	{
 		// add everything what is left now (if necessary)
-		int size = (srcCurrent-srcPos - 1); 
+		size_t size = (srcCurrent-srcPos - 1);
 		if ( size>0 )
 		{
 			bool tableProtection = ( wcsncmp(srcPos,L"{|",2) == 0 );
 
-			int newDstSize = dstSize + size ;
+			size_t newDstSize = dstSize + size ;
 			if (tableProtection) 
 				newDstSize++;
 			if ( newDstSize>dstLength )
@@ -739,7 +737,7 @@ wchar_t* WikiMarkupParser::ExpandTemplates(const wchar_t* src)
 		//unstrip
 		if(stripFlag){
 			wstring unstrippedDst = unstrip1 (wstring(dst), stripMap);
-			int unstrippedLen=unstrippedDst.length();
+			size_t unstrippedLen=unstrippedDst.length();
 			if(unstrippedLen>(dstPos-dst))
 				dst = (wchar_t *)realloc(dst, (unstrippedLen+1)*sizeof(wchar_t));
 			int count;
@@ -800,7 +798,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 	
 	// wprintf(L"Expanding template:\r\n'%S'\n", templateText);
 
-	int length = pos-templateText+1;
+	size_t length = pos-templateText+1;
 	wchar_t* preTemplateName = (wchar_t*) malloc(length*sizeof(wchar_t));
 	wcsncpy(preTemplateName, templateText, pos-templateText);
 	preTemplateName[pos-templateText] = 0x0;
@@ -879,7 +877,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 				const wchar_t* resultStart = pos;
 				pos = PosOfNextParamPipe(pos);
 				
-				int length = pos - resultStart;
+				size_t length = pos - resultStart;
 				wchar_t value[length+1];
 				if ( length )
 					wcsncpy(value, resultStart, length);
@@ -958,7 +956,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 				const wchar_t* resultStart = pos;
 				pos = PosOfNextParamPipe(pos);
 				
-				int length = pos - resultStart;
+				size_t length = pos - resultStart;
 				wchar_t value[length+1];
 				if ( length )
 					wcsncpy(value, resultStart, length);
@@ -1035,7 +1033,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 				const wchar_t* resultStart = pos;
 				pos = PosOfNextParamPipe(pos);
 				
-				int length = pos - resultStart;
+				size_t length = pos - resultStart;
 				wchar_t value[length+1];
 				if ( length )
 					wcsncpy(value, resultStart, length);
@@ -1108,14 +1106,14 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 		DBH TT(templateText);
 		bool notEqual = wcsstr(templateName, L"#ifeq:")==NULL;
 		
-		pos = wcsstr(templateText, L"#if") + (notEqual ? 7 : 6);
+		pos = std::wcsstr(templateText, L"#if") + (notEqual ? 7 : 6);
 		if ( *pos )
 		{
 			const wchar_t* leftStart = pos;
 			
 			pos = PosOfNextParamPipe(pos);
 
-			int length = pos - leftStart;			
+			size_t length = pos - leftStart;
 			
 			wchar_t left[length + 1];
 			if ( length )
@@ -1130,7 +1128,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 				wchar_t* expandedLeft = ExpandTemplates(left);
 				if ( expandedLeft!=left )
 				{
-					int length = 2 + 6 + wcslen(expandedLeft) + wcslen(pos) + 2;
+					size_t length = 2 + 6 + wcslen(expandedLeft) + wcslen(pos) + 2;
 					if ( notEqual )
 						length++;
 					
@@ -1172,7 +1170,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 						wchar_t* expandedRight = ExpandTemplates(right);
 						if ( expandedRight!=right )
 						{
-							int length = 2 + 6 + + wcslen(left) + 1 + wcslen(expandedRight) + wcslen(pos) + 2;
+							size_t length = 2 + 6 + + wcslen(left) + 1 + wcslen(expandedRight) + wcslen(pos) + 2;
 							if ( notEqual )
 								length++;
 							
@@ -1242,7 +1240,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 
 		DBH TemplateText(templateText);
 
-		int length = wcslen(templateName) - 8;
+		size_t length = wcslen(templateName) - 8;
 		
 		wchar_t phrase[length+1];
 		if ( length )
@@ -1351,7 +1349,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 			
 			pos = PosOfNextParamPipe(pos);
 
-			int length = pos - titleStart;			
+			size_t length = pos - titleStart;
 			
 			wchar_t title[length + 1];
 			if ( length )
@@ -1368,7 +1366,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 				wchar_t* expandedTitle = ExpandTemplates(title);
 				if ( expandedTitle!=title )
 				{
-					int length = 2 + 12 + wcslen(expandedTitle) + wcslen(pos) + 2;
+					size_t length = 2 + 12 + wcslen(expandedTitle) + wcslen(pos) + 2;
 					
 					wchar_t* newTemplate = (wchar_t*) malloc( (length+1) * sizeof(wchar_t) );
 					wcscpy(newTemplate, L"{{#titleparts:");
@@ -1470,7 +1468,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 					}
 				}
 			}
-			int titleLen = wcslen(title);
+			size_t titleLen = wcslen(title);
 			slashPositions[slashCount+1]=title+titleLen;
 			printf("slashcount:%d numOfSeg:%d firstSeg:%d\n",slashCount, numOfSegIndex, firstSegIndex);
 			if (numOfSegIndex==0 && firstSegIndex==1)
@@ -1489,7 +1487,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 			effectiveEnd = (numOfSegIndex>0)?(effectiveBegin+numOfSegIndex):(slashCount + numOfSegIndex);
 			if (effectiveEnd<=effectiveBegin)
 				effectiveEnd = effectiveBegin+1;
-			int spliceLength = slashPositions[effectiveEnd]-slashPositions[effectiveBegin];
+			size_t spliceLength = slashPositions[effectiveEnd]-slashPositions[effectiveBegin];
 			wchar_t *result = (wchar_t*)malloc((spliceLength+1)*sizeof(wchar_t));
 			wcsncpy(result, slashPositions[effectiveBegin], spliceLength);
 			result[spliceLength]=0x0;
@@ -1610,7 +1608,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 	{
 		pos = PosOfNextParamPipe(templateParams);
 		
-		int length = pos-templateParams;
+		size_t length = pos-templateParams;
 		wchar_t firstParam[length + 1];
 		if ( length )
 			wcsncpy(firstParam, templateParams, length);
@@ -1624,7 +1622,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 			{
 				pos = PosOfNextParamPipe(templateParams);
 
-				int length = pos - templateParams;
+				size_t length = pos - templateParams;
 				wchar_t data[length + 1];
 				if ( length )
 					wcsncpy(data, templateParams, length);
@@ -1634,7 +1632,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 				wchar_t* equalPos = wcsstr(data, L"=");
 				if ( equalPos )
 				{					
-					int length = equalPos - data;
+					size_t length = equalPos - data;
 					wchar_t name[length + 1];
 					if ( length )
 						wcsncpy(name, data, length);
@@ -1684,7 +1682,7 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 			{
 				pos = PosOfNextParamPipe(templateParams);
 				
-				int length = pos - templateParams;
+				size_t length = pos - templateParams;
 				wchar_t data[length + 1];
 				if ( length )
 					wcsncpy(data, templateParams, length);
@@ -1734,8 +1732,8 @@ wchar_t* WikiMarkupParser::ExpandTemplate(const wchar_t* templateText)
 		while (wikiTemplate[start]==L'{')
 			start++;
 		
-		int end = start;
-		int length = wikiTemplate.length();
+		size_t end = start;
+		size_t length = wikiTemplate.length();
 		int braketCount = 3;
 		
 		while ( braketCount && end<length )
@@ -1860,7 +1858,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 	}	
 	else if ( startsWith(text, L"localurl:") )
 	{
-		wchar_t* url = wcsstr(text, L":") + 1;
+		const wchar_t* url = (std::wcsstr(text, L":") + 1);
 		if ( !*url )
 			return NotHandledText(text);
 			
@@ -1873,7 +1871,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 	}
 	else if ( startsWith(text, L"urlencode:") )
 	{
-		wchar_t* url = wcsstr(text, L":") + 1;
+		const wchar_t* url = std::wcsstr(text, L":") + 1;
 		if ( !*(url+1) )
 			return NotHandledText(text);
 
@@ -1881,7 +1879,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 	}
 	else if ( startsWith(text, L"anchorencode:") )
 	{
-		wchar_t* url = wcsstr(text, L":") + 1;
+		const wchar_t* url = std::wcsstr(text, L":") + 1;
 		if ( !*(url+1) )
 			return NotHandledText(text);
 		
@@ -1889,7 +1887,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 	}
 	else if ( startsWith(text, L"fullurl:") )
 	{
-		wchar_t* url = wcsstr(text, L":") + 1;
+		const wchar_t* url = std::wcsstr(text, L":") + 1;
 		if ( !*url )
 			return NotHandledText(text);
 		
@@ -1908,7 +1906,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 		const wchar_t *value = text + 5;
 		if ( !*value )
 			return NotHandledText(text);
-		wchar_t *pLastPipe = wcsrchr(value, L'|');
+		const wchar_t *pLastPipe = std::wcsrchr(value, L'|');
 		wchar_t *buffer;
 		fwprintf(stderr, L"#tag:%S\n",value);
 		if(pLastPipe)
@@ -1917,13 +1915,13 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 			if(pLastPipe==value)
 			{
 				//empty result
-				return L"";
+				return (wchar_t *)L"";
 			}
 			//else if(pLastPipe==wcschr(value, L'|'))
 			else
 			{
-				wchar_t *pFirstPipe=wcschr(value, L'|');
-				size_t tagNameLen= (pFirstPipe-value);
+				const wchar_t *pFirstPipe = std::wcschr(value, L'|');
+				size_t tagNameLen = (pFirstPipe-value);
 
 				buffer = (wchar_t *)malloc(sizeof(wchar_t)*(wcslen(value)+tagNameLen+5));
 				buffer[0]=L'<';
@@ -1958,7 +1956,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 		else
 		{
 			//no content
-			int tagNameLen=wcslen(value);
+			size_t tagNameLen=wcslen(value);
 			buffer = (wchar_t *)malloc(sizeof(wchar_t)*(tagNameLen+5));
 			buffer[0]=L'<';
 			wcsncpy(buffer+1,value, tagNameLen);
@@ -1980,7 +1978,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 	}
 	else if ( startsWith(text, L"lc:") )
 	{
-		int length = wcslen(text) - 3;
+		size_t length = wcslen(text) - 3;
 		wchar_t value[length+1];
 		
 		if ( length )
@@ -1992,7 +1990,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 	}
 	else if ( startsWith(text, L"lcfirst:") )
 	{
-		int length = wcslen(text) - 8;
+		size_t length = wcslen(text) - 8;
 		wchar_t value[length+1];
 		
 		if ( length )
@@ -2005,7 +2003,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 	}
 	else if ( startsWith(text, L"uc:") )
 	{
-		int length = wcslen(text) - 3;
+		size_t length = wcslen(text) - 3;
 		wchar_t value[length+1];
 		
 		if ( length )
@@ -2017,7 +2015,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 	}
 	else if ( startsWith(text, L"ucfirst:") )
 	{
-		int length = wcslen(text) - 8;
+		size_t length = wcslen(text) - 8;
 		wchar_t value[length+1];
 		
 		if ( length )
@@ -2030,7 +2028,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 	}                        
 	else if ( startsWith(text, L"formatnum:") )
 	{		
-		int length = wcslen(text + 10);
+		size_t length = wcslen(text + 10);
 		if ( ! length )
 			return NotHandledText(text);
 
@@ -2213,7 +2211,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 
 		const wchar_t* slash = NULL;
 		const wchar_t* help = _pageName;
-		while ( (help=wcsstr(help, L"/")) )
+		while ( (help=std::wcsstr(help, L"/")) )
 		{
 			help++;
 			slash = help;
@@ -2229,7 +2227,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 		if ( _pageName==NULL )
 			return wstrdup(L"");
 		
-		const wchar_t* slash = wcsstr(_pageName, L"/");
+		const wchar_t* slash = std::wcsstr(_pageName, L"/");
 		if ( slash )
 			return wstrndup(_pageName, slash-_pageName);
 		else
@@ -2252,7 +2250,7 @@ wchar_t* WikiMarkupParser::HandleKnownTemplatesAndVariables(const wchar_t* text)
 		if ( _pageName==NULL )
             return wstrdup(L"");
 
-        const wchar_t* slash = wcsstr(_pageName, L"/");
+        const wchar_t* slash = std::wcsstr(_pageName, L"/");
         if ( slash )
             return wstrndup(_pageName, slash-_pageName);
         else
@@ -2494,7 +2492,7 @@ wchar_t* WikiMarkupParser::GetTextUntilEndOfTag(const wchar_t *tagName)
 	wchar_t* start = _pCurrentInput;
 	wchar_t* stop = NULL;
 	
-	int tagNameLen=wcslen(tagName);
+	size_t tagNameLen=wcslen(tagName);
 
 	wchar_t c;
 	while ( (c=GetNextChar()) )
@@ -2514,7 +2512,7 @@ wchar_t* WikiMarkupParser::GetTextUntilEndOfTag(const wchar_t *tagName)
 	if ( start>=stop )
 		return NULL;
 	
-	int length = stop-start;
+	size_t length = stop-start;
 	wchar_t* result = (wchar_t*) malloc((length+1) * sizeof(wchar_t));
 	wcsncpy(result, start, length);
 	result[length] = 0x0;
@@ -2544,7 +2542,7 @@ wchar_t* WikiMarkupParser::GetTextUntilNextTag()
 	if ( start>=stop )
 		return NULL;
 	
-	int length = stop-start;
+	size_t length = stop-start;
 	wchar_t* result = (wchar_t*) malloc((length+1) * sizeof(wchar_t));
 	wcsncpy(result, start, length);
 	result[length] = 0x0;
@@ -2676,12 +2674,12 @@ void WikiMarkupParser::AppendPre(const wchar_t* pre)
 	}
 }
 
-void WikiMarkupParser::PushTag(wchar_t* name, bool output)
+void WikiMarkupParser::PushTag(const wchar_t* name, bool output)
 {
 	tagType* newTag = new tagType;
 	newTag->name = (wchar_t*) malloc( (wcslen(name)+1)*sizeof(wchar_t) );
 	wcscpy(newTag->name, name);
-	newTag->position = _pCurrentOutput - _pOutput;
+	newTag->position = (int)(_pCurrentOutput - _pOutput);
 	 
 	newTag->pPrevious = _pCurrentTag;
 	newTag->pNext = NULL;
@@ -2698,7 +2696,7 @@ void WikiMarkupParser::PushTag(wchar_t* name, bool output)
 	}
 }
 
-void WikiMarkupParser::PopTag(wchar_t* name, bool output) 
+void WikiMarkupParser::PopTag(const wchar_t* name, bool output)
 {
 	if ( _pCurrentTag==NULL ) {
 		return;
@@ -2728,7 +2726,7 @@ void WikiMarkupParser::PopTag(wchar_t* name, bool output)
 	}
 }
 
-bool WikiMarkupParser::TopTagIs(wchar_t* name)
+bool WikiMarkupParser::TopTagIs(const wchar_t* name)
 {
 	if ( !_pCurrentTag || !name ) 
 		return false;
@@ -2858,7 +2856,7 @@ void WikiMarkupParser::HandleInternalLink(const wchar_t* linkText)
 			trim(imageFilename);
 
 			// get a pointer to the last real "|" (the description):
-			wchar_t* imageDescription = L"";
+			wchar_t* imageDescription = (wchar_t *)L"";
 			
 			wchar_t** params = split(linkDescription, L'|');
 			
@@ -3899,7 +3897,7 @@ void WikiMarkupParser::Parse()
 						// italic, start or end?
 						if ( _italic<0 ) {
 							// start
-							_italic = (_pCurrentOutput - _pOutput);
+							_italic = (int)(_pCurrentOutput - _pOutput);
 							Append(L"<i>");
 						}
 						else {
@@ -3907,7 +3905,7 @@ void WikiMarkupParser::Parse()
 							if ( _bold>_italic ) {
 								// yes, close and reopen it
 								Append(L"</b></i>");
-								_bold = (_pCurrentOutput - _pOutput);
+								_bold = (int)(_pCurrentOutput - _pOutput);
 								Append(L"<b>");
 								_italic = -1;
 							}
@@ -3922,7 +3920,7 @@ void WikiMarkupParser::Parse()
 						// bold, start or end?
 						if ( _bold<0 ) {
 							// start
-							_bold = (_pCurrentOutput - _pOutput);
+							_bold = (int)(_pCurrentOutput - _pOutput);
 							Append(L"<b>");
 						}
 						else {
@@ -3930,7 +3928,7 @@ void WikiMarkupParser::Parse()
 							if ( _italic>_bold ) {
 								// yes, close and reopen it
 								Append(L"</i></b>");
-								_italic = (_pCurrentOutput - _pOutput);
+								_italic = (int)(_pCurrentOutput - _pOutput);
 								Append(L"<i>");
 								_bold = -1;
 							}
@@ -4186,7 +4184,7 @@ void WikiMarkupParser::Parse()
 									string mathutf8 = CPPStringUtils::to_utf8(wstring(alt));
 									//mathutf8 = "&lt;math&gt;"+mathutf8+"&lt;\\math&gt;";
 									
-									length = mathutf8.size();
+									length = (CC_LONG)mathutf8.size();
 									unsigned char *md5 =(unsigned char*) malloc(18*(sizeof(unsigned char)));
 									CC_MD5((void*)(mathutf8.data()),length,md5);
 									wstring formatted_math= CPPStringUtils::js_format(wstring(alt));
@@ -4221,7 +4219,7 @@ void WikiMarkupParser::Parse()
 											Append(L"#000Dx8*#");
 										wchar_t *pMathcontent=mathcontent;
 										wchar_t c;
-										while(c=*pMathcontent++){
+										while( (c=*pMathcontent++) ){
 											switch(c){
 											case L'<':
 												Append(L"&lt;");
@@ -4626,7 +4624,7 @@ void WikiMarkupParser::ParseNoWikiArea(int tagType)
 						if ( !endOfTagName )
 							endOfTagName = _pCurrentInput - 1;
 											
-						int length = endOfTagName - startOfTagName;
+						long length = endOfTagName - startOfTagName;
 						if ( length>0 )
 						{
 							wchar_t tag[length+1];
@@ -4762,7 +4760,7 @@ void WikiMarkupParser::InsertToc()
 	if ( count<=3 && !_forceToc )
 		return;
 	
-	int length = wcslen(_pOutput) + toc.length();
+	size_t length = wcslen(_pOutput) + toc.length();
 	wchar_t* dst = (wchar_t*) malloc((length+1)*sizeof(wchar_t));
 	
 	wcsncpy(dst, _pOutput, _tocPosition);
@@ -4858,7 +4856,7 @@ wstring WikiMarkupParser::MonthName(int monthNo)
 	return CPPStringUtils::from_utf8w(_languageConfig->GetSetting(key, key));
 }
 
-int WikiMarkupParser::IsWikiTag(wchar_t* tagName) 
+int WikiMarkupParser::IsWikiTag(const wchar_t* tagName)
 {
 	int number = 0;
 	if ( !tagName || !*tagName )
@@ -4902,14 +4900,14 @@ wstring WikiMarkupParser::strip(wstring src, map<wstring,wstring> *stripMap){
 	//patternBegin[1]=CPPStringUtils::to_wstring("<pre>");
 	//patternBegin[2]=CPPStringUtils::to_wstring("<source>");
 	int i;
-	int p1=0,p2=0;
+	size_t p1=0,p2=0;
 	for(i=0;i<3;i++){
 		//assume the the tags are well-structured
 		while( ((p1=src.find(patternBegin[i], p1)) != string::npos)
 			&& (src[p1]==L' '||src[p1]==L'>')){
 			p2=src.find(patternEnd[i],p1);
 			if(p2!=string::npos){
-				int plen=p2-p1+patternEnd[i].length();
+				long plen=p2-p1+patternEnd[i].length();
 				wstring tag=randomTag();
 				wstring match=src.substr(p1,plen);
 				//stripMap.insert(pair<wstring,wstring>(tag,match));
@@ -4953,7 +4951,7 @@ wchar_t* WikiMarkupParser::unstrip2(wchar_t *src){
 	
 	//wchar_t *psrc=src; *pdst=dst;
 	bool unstripFlag=false;
-	int p=0;
+	size_t p=0;
 	for(int i=0;i<10;i++)
 		while((p=s.find(L"___S_STRIP__"+specialRepl[i]+L"__PIRTS_S___"))!= string::npos)
 		{
@@ -4962,7 +4960,7 @@ wchar_t* WikiMarkupParser::unstrip2(wchar_t *src){
 		}
 	if(unstripFlag)
 	{
-		int l=s.length();
+		size_t l=s.length();
 		wchar_t *dst=(wchar_t*)malloc(sizeof(wchar_t)*(l+1));
 		wcsncpy(dst, s.c_str(), l);
 		dst[l]=0x0;

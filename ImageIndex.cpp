@@ -23,13 +23,14 @@
 #include "ImageIndex.h"
 #include "CPPStringUtils.h"
 #include <cstdio>
+#include <cstdlib>
 
 const char* IMAGES_DATA_NAME = "images";
 const char* IMAGES_DATA_EXTENSION = ".bin";
 
 #define SIZEOF_POSITION_INFORMATION 16
 
-#pragma pack(1)
+#pragma pack(push,1)
 typedef struct 
 {
 	char languageCode[2];
@@ -58,7 +59,7 @@ ImageIndex::ImageIndex(string pathToDataFile)
 		// second try
 		_dataFileName = "";
 		
-		int length = pathToDataFile.length();
+		size_t length = pathToDataFile.length();
 		if ( length && pathToDataFile[length-1]=='/' )
 		{
 			if ( (length>=4) && pathToDataFile[length-4]=='/' )
@@ -99,7 +100,7 @@ ImageIndex::~ImageIndex()
 {
 }
 
-unsigned char* ImageIndex::GetImage(string filename, int* size)
+unsigned char* ImageIndex::GetImage(string filename, size_t* size)
 {
 	_lastImagePos = -1;
 	_lastImageLength = 0;
@@ -188,7 +189,7 @@ string ImageIndex::GetFilename(FILE* f, int imageNumber)
 
 	int titlePos=0;
 	size_t read = fread(&titlePos, sizeof(int), 1, f);
-	fprintf(stderr, "titlePos=0x%llx\n",titlePos);
+	fprintf(stderr, "titlePos=0x%x\n",titlePos);
 
 	if ( !read )
 		return string();

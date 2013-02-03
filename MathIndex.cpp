@@ -22,13 +22,14 @@
 
 #include "MathIndex.h"
 #include "CPPStringUtils.h"
+#include <cstdlib>
 
 const char* MATH_DATA_NAME = "math";
 const char* MATH_DATA_EXTENSION = ".bin";
 
 #define SIZEOF_POSITION_INFORMATION 16
 
-#pragma pack(1)
+#pragma pack(push,1)
 typedef struct 
 {
 	char languageCode[2];
@@ -38,7 +39,7 @@ typedef struct
 	fpos_t	indexPos;
 	char reserved[10];
 } IMAGEFILEHEADER;
-#pragma pack (pop)
+#pragma pack(pop)
 
 MathIndex::MathIndex(string pathToDataFile)
 {
@@ -57,7 +58,7 @@ MathIndex::MathIndex(string pathToDataFile)
 		// second try
 		_dataFileName = "";
 		
-		int length = pathToDataFile.length();
+		size_t length = pathToDataFile.length();
 		if ( length && pathToDataFile[length-1]=='/' )
 		{
 			if ( (length>=4) && pathToDataFile[length-4]=='/' )
@@ -98,7 +99,7 @@ MathIndex::~MathIndex()
 {
 }
 
-unsigned char* MathIndex::GetImage(string filename, int* size)
+unsigned char* MathIndex::GetImage(string filename, size_t* size)
 {
 	_lastImagePos = -1;
 	_lastImageLength = 0;
