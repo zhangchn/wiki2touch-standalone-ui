@@ -23,6 +23,7 @@
 #include "MathIndex.h"
 #include "CPPStringUtils.h"
 #include <cstdlib>
+#include <cstdio>
 
 const char* MATH_DATA_NAME = "math";
 const char* MATH_DATA_EXTENSION = ".bin";
