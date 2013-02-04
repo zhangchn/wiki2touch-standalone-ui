@@ -5,7 +5,7 @@
 
 Wikisrvd, the core component of wiki2touch, is a mini web server with the capability to decompress, parse the MediaWiki XML dump and rewrite into an HTML.
 
-Besides running on a jailbroken iPhone/iPad/iPod touch, wikisrvd could also be useful for a mini server hosting read-only images of MediaWiki sites on various OSes.
+Besides running on a jailbroken iPhone/iPad/iPod touch, wikisrvd could also be useful as a mini server hosting read-only images of MediaWiki sites on various OSes.
 
 = Details =
 
