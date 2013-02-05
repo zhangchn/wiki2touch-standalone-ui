@@ -201,7 +201,7 @@ bool Settings::Init(int argc, char *argv[])
 		_basePath = _basePath.substr(0, pos+1);
 	
 	// set the path for the web content folder
-	_webContentPath = _basePath + "webcontent/";		
+	_webContentPath = _basePath + "webcontent";
 	
 	// find out which languages are installed
 	_installedLanguages = string();

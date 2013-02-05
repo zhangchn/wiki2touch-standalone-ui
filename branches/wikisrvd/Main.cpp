@@ -314,8 +314,8 @@ void send_article(FILE *f, char* name)
 	if ( strlen(pHelp)>=3 && pHelp[2]==':' )
 	{
 		// change the "namespace" to a subfolder
-		pHelp[2] = '/';
-		redirect_to(f, (string("/wiki/") + string(pHelp)).c_str());
+		name[2] = '/';
+		redirect_to(f, (string("/wiki/") + string(name)).c_str());
 	}
 	else if ( strlen(pHelp)<3 || pHelp[2]!='/' )
 	{
@@ -711,8 +711,9 @@ int process(FILE *f)
 			url += 23;
 			
 			char languageCode[3];
-			if ( strlen(url)>=2 )
+			if ( strlen(url)>=3 && (url[0]==':'||url[0]=='/'))
 			{
+                url++;
 				languageCode[0] = *url++;
 				languageCode[1] = *url++;
 				languageCode[2] = 0x0;
@@ -973,7 +974,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in sin;
 		
 	_sock = socket(AF_INET, SOCK_STREAM, 0);
-	
+
 	int reuse = 1;
 	if (setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*) &reuse, sizeof(int)) < 0)
 	{
@@ -1003,7 +1004,7 @@ int main(int argc, char *argv[])
 			if (s < 0) 
 				break;
 		
-			f = fdopen(s, "r+");
+			f = fdopen(s, "a+"); // "r+" works only in Mac OS X/iOS, where as "a+" also works for Linux
 			process(f);
 			
 			fclose(f);
