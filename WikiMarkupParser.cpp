@@ -4112,114 +4112,60 @@ void WikiMarkupParser::Parse()
 							case 8: // math
 								if ( !endTag || emptyTag )
 								{
-								//#ifdef MATH_SUPPORT
 									//Hashing Math with MD5
-									/*
-									CC_LONG length;
-									wchar_t* mathwch0; 
-									wchar_t* mathwch;
-									wchar_t* pwchr;
-									wchar_t* raw=(wchar_t*)malloc(1024);
 
-									mathwch=GetTextUntilNextTag();
-									mathwch0=mathwch;
-									raw=wcscpy(raw, mathwch);
-
-
-									//Remove leading space
-									while((*mathwch == L' ')||(*mathwch == L'\n')) mathwch ++;
-									//Remove space from the end, if any.
-									pwchr = mathwch + wcslen(mathwch) -1;
-									while((*pwchr == L' ')||(*pwchr==L'\n')) {*pwchr = L'\0'; pwchr --;};
-
-									
-
-									string mathutf8 = CPPStringUtils::to_utf8(wstring(mathwch));
-									
-									length = mathutf8.size();
-									unsigned char *md5 =(unsigned char*) malloc(18*(sizeof(unsigned char)));
-									CC_MD5((void*)(mathutf8.data()),length,md5);
-									//md5[16]=0x0;
-									//Append(mathwch);
-									wchar_t *md5wstr=(wchar_t *)malloc(64*sizeof(wchar_t));
-									wchar_t *md5imgtags=(wchar_t *)malloc((128)*sizeof(wchar_t));
-									swprintf(md5wstr,(size_t)64,L"%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x",
-										md5[0],md5[1],md5[2],md5[3],
-										md5[4],md5[5],md5[6],md5[7],
-										md5[8],md5[9],md5[10],md5[11],
-										md5[12],md5[13],md5[14],md5[15]);
-									swprintf(md5imgtags,(size_t)128,L"<img src=\"./math:%S.png\" />",md5wstr);
-									//Append((CPPStringUtils::to_wstring(std::string(md5str))).data());
-									Append(L"<!-- raw:");
-									Append(raw);
-									//Append(L":alt:");
-									//Append(mathwch);
-									Append(L":-->");
-									Append(md5imgtags);
-									//Append(L" alt=\"");
-									//Append(mathwch);
-									//Append(L"\" />");
-									
-									free(md5);
-									free(md5wstr);
-									free(md5imgtags);
-									free(raw);
-									free(mathwch0);
-									*/
 									if(!settings.IsJSMathEnabled())
 									{
-									CC_LONG length;
-									wchar_t* mathwch; 
-									wchar_t* pwchr;
-									wchar_t* raw=(wchar_t*)malloc(2048);
-									wchar_t* alt=(wchar_t*)malloc(2048);
-									wchar_t *alt0=alt;
+                                        CC_LONG length;
+                                        wchar_t *mathwch;
+                                        wchar_t *pwchr;
+                                        wchar_t *raw;
+                                        wchar_t *alt;
+                                        wchar_t *alt0;
 
-									mathwch = GetTextUntilNextTag();
-									wcsncpy(raw, mathwch,2047);
-									wcsncpy(alt, mathwch,2047);
+                                        mathwch = GetTextUntilNextTag();
+                                        raw = wcsdup(mathwch);
+                                        alt0 = wcsdup(mathwch);
+                                        alt = alt0;
 
-									pwchr = mathwch;
+                                        pwchr = mathwch;
 
-									//Remove leading space
-									//while((*mathwch == L' ')||(*mathwch == L'\n' )) mathwch ++;
-									while((*alt == L' ')||(*alt == L'\n' )) alt ++;
-									//Remove space from the end, if any.
-									pwchr = alt + wcslen(alt) -1;
-									while((*pwchr == L' ')||(*pwchr == L'\n')) {*pwchr = L'\0'; pwchr --;};
-
+                                        //Remove leading space
+                                        while((*alt == L' ')||(*alt == L'\n' )) alt ++;
+                                        //Remove space from the end, if any.
+                                        pwchr = alt + wcslen(alt) -1;
+                                        while((*pwchr == L' ')||(*pwchr == L'\n')) {*pwchr = L'\0'; pwchr --;};
+                                        // Convert from wstring to utf8 string
+                                        string mathutf8 = CPPStringUtils::to_utf8(wstring(alt));
 									
-									string mathutf8 = CPPStringUtils::to_utf8(wstring(alt));
-									//mathutf8 = "&lt;math&gt;"+mathutf8+"&lt;\\math&gt;";
-									
-									length = (CC_LONG)mathutf8.size();
-									unsigned char *md5 =(unsigned char*) malloc(18*(sizeof(unsigned char)));
-									CC_MD5((md5_data_ptr_t)(mathutf8.data()),length,md5);
-									wstring formatted_math= CPPStringUtils::js_format(wstring(alt));
-									wchar_t *md5wstr=(wchar_t *)malloc(64*sizeof(wchar_t));
-									wchar_t *md5imgtags=(wchar_t *)malloc((160+formatted_math.size())*sizeof(wchar_t));
-									//wchar_t *md5imgtags=(wchar_t *)malloc(64*sizeof(wchar_t));
-									swprintf(md5wstr,(size_t)64,L"%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x",
-										md5[0],md5[1],md5[2],md5[3],
-										md5[4],md5[5],md5[6],md5[7],
-										md5[8],md5[9],md5[10],md5[11],
-										md5[12],md5[13],md5[14],md5[15]);
-									//swprintf(md5imgtags,(size_t)64,L"<img src=\"./math:%S.png\" />",md5wstr);
+                                        length = (CC_LONG)mathutf8.size();
+                                        unsigned char *md5 =(unsigned char*) malloc(18*(sizeof(unsigned char)));
+                                        CC_MD5((md5_data_ptr_t)(mathutf8.data()),length,md5);
+                                        wstring formatted_math= CPPStringUtils::js_format(wstring(alt));
+                                        wchar_t *md5wstr=(wchar_t *)malloc(64*sizeof(wchar_t));
+                                        wchar_t *md5imgtags=(wchar_t *)malloc((160+formatted_math.size())*sizeof(wchar_t));
 
-									swprintf(md5imgtags,(size_t)(160+formatted_math.size()),L"<img onerror=\"mathImgAlternative('%S',this);\" src=\"./math:%S.png\"/>\0",formatted_math.c_str(),md5wstr);
-									//Append((CPPStringUtils::to_wstring(std::string(md5str))).data());
-									Append(L"<!-- raw:");
-									Append(raw);
-									Append(L":alt:");
-									Append(alt);
-									Append(L":-->");
-									Append(md5imgtags);
+                                        swprintf(md5wstr,(size_t)64,L"%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x",
+                                                 md5[0],md5[1],md5[2],md5[3],
+                                                 md5[4],md5[5],md5[6],md5[7],
+                                                 md5[8],md5[9],md5[10],md5[11],
+                                                 md5[12],md5[13],md5[14],md5[15]);
 
-									free(md5);
-									free(md5wstr);
-									free(md5imgtags);
-									free(raw);
-									free(alt0);
+
+                                        swprintf(md5imgtags,(size_t)(160+formatted_math.size()),L"<img onerror=\"mathImgAlternative('%S',this);\" src=\"./math:%S.png\"/>\0",formatted_math.c_str(),md5wstr);
+
+                                        Append(L"<!-- raw:");
+                                        Append(raw);
+                                        Append(L":alt:");
+                                        Append(alt);
+                                        Append(L":-->");
+                                        Append(md5imgtags);
+                                        
+                                        free(md5);
+                                        free(md5wstr);
+                                        free(md5imgtags);
+                                        free(raw);
+                                        free(alt0);
 									} // if(!IsJSMathEnabled)
 									else
 									{
