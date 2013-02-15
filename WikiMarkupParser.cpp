@@ -3406,58 +3406,61 @@ void WikiMarkupParser::Parse()
 					WikiMarkupParser wikiMarkupParser(_languageCodeW, _pageName, false);
 		
 					wchar_t *line = GetNextLine();
-					int lineLength = 0;
-					wchar_t *pline = line;
-					while ( *pline++ ){
-						if ( *pline == L'<' || *pline == L'>' )
+                    // determine the buffer size for the line to be encoded
+					int bufferSize = 0;
+					wchar_t *pLine = line;
+					while ( *pLine ){
+						if ( *pLine == L'<' || *pLine == L'>' )
 						{
-							lineLength += 4;
+							bufferSize += 4;
 						}
-						else if ( *pline == L'&' )
+						else if ( *pLine == L'&' )
 						{
-							lineLength += 5;
+							bufferSize += 5;
 						}
 						else
-							lineLength++;
+							bufferSize++;
+						pLine++;
 					}
-					lineLength+=13;
-					wchar_t *line2 = (wchar_t *)malloc(sizeof(wchar_t)*(lineLength+1));
-					wchar_t *pline2 = line2;
-					pline = line;
+					bufferSize+=13;
+					wchar_t *encodedLine = (wchar_t *)malloc(sizeof(wchar_t)*(bufferSize+1));
+					wchar_t *pEncodedLine = encodedLine;
+                    // reset the pointer to line[0]
+					pLine = line;
 					wchar_t c;
-					wcsncpy(pline2,L"<span>",6);
-					pline2+=6;
-					while ((c=*pline++)){
+					wcsncpy(pEncodedLine,L"<span>",6);
+					pEncodedLine+=6;
+					while ((c=*pLine++)){
 						switch (c) {
 							case L'<':
-								wcsncpy(pline2, L"&lt;", 4);
-								pline2+=4;
+								wcsncpy(pEncodedLine, L"&lt;", 4);
+								pEncodedLine+=4;
 								break;
 							case L'>':
-								wcsncpy(pline2,L"&gt;",4);
-								pline2+=4;
+								wcsncpy(pEncodedLine,L"&gt;",4);
+								pEncodedLine+=4;
 								break;
 							case L'&':
-								wcsncpy(pline2,L"&amp;",5);
-								pline2+=5;
+								wcsncpy(pEncodedLine,L"&amp;",5);
+								pEncodedLine+=5;
 								break;
 							default:
-								*pline2=c;
-								pline2++;
+								*pEncodedLine=c;
+								pEncodedLine++;
 								break;
 						}
 					}
-					wcsncpy(pline2,L"</span>",7);
-					pline2+=7;
-					*pline2 = 0x0;
-					free(line);
-					line = line2;
-					
-					wikiMarkupParser.SetInput(line); 
+					wcsncpy(pEncodedLine,L"</span>",7);
+					pEncodedLine+=7;
+					*pEncodedLine = 0x0;
+                    
+					wikiMarkupParser.SetInput(encodedLine);
 					wikiMarkupParser.SetRecursionCount(_recursionCount);
 					wikiMarkupParser.Parse();
 					AppendHtml(wikiMarkupParser.GetOutput());
-					free(line);
+                    
+					free(encodedLine);
+                    free(line);
 				} while( (c=GetNextChar())==0x20 );
 				Append(L"</pre>");
 			}
